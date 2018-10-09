@@ -1,0 +1,11 @@
+syntax: glob
+Inversions/bin
+Inversions/obj
+*.suo
+bin/
+obj/
+packages/
+*.orig
+BD/InversionsBD.mdf
+BD/InversionsBD_log.ldf
+*.DotSettings.user
