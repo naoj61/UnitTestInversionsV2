@@ -26,48 +26,165 @@ namespace UnitTestInversions
             return sessio;
         }
 
+        #region *** Modifiquen dades ***
 
-
+        /// <summary>
+        /// Esborra la taula "DesglosCompres" i la crea de nou.
+        /// </summary>
         [TestMethod]
-        public void ComprovaDatesMovDuplicades()
+        public void GeneraDesgloçCompres()
         {
-            try
+            return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
+
+            var sessio = new InversionsBDContext();
+
+            sessio.Database.ExecuteSqlCommand("TRUNCATE TABLE [DesglosCompres]");
+
+            using (var conn = new InversionsBDContext())
             {
-                InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
-
-                bool totOk = true;
-
-                System.Diagnostics.Debug.WriteLine("********** Inici Comprovació dates **********");
-                DateTime dataAnt = DateTime.MinValue;
-                foreach (var mov in sessio.Moviments.OrderBy(o => o.Data).ToList())
+                using (var dbContextTransaction = conn.Database.BeginTransaction())
                 {
-                    if (dataAnt == mov.Data)
+                    try
                     {
-                        System.Diagnostics.Debug.WriteLine("Data duplicada. {0}. IdMov.{1}", dataAnt, mov.Id);
-                        totOk = false;
-                    }
-                    dataAnt = mov.Data;
-                }
-                System.Diagnostics.Debug.WriteLine("********** Final Comprovació dates **********");
+                        System.Diagnostics.Debug.WriteLine("********** Inici **********");
 
-                Assert.IsTrue(totOk, "Hi ha dates duplicades");
+                        foreach (var usu in sessio.Usuaris)
+                        {
+                            foreach (var co in sessio.Moviments
+                                .Where(w => w.UsuariId == usu.Id && w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
+                            {
+                               //if(co.Id == 170)
+                                co.desgloçarCompra(conn);
+                            }
+                        }
+
+                        dbContextTransaction.Commit();
+                    }
+                    catch (Exception)
+                    {
+                        dbContextTransaction.Rollback();
+                        throw;
+                    }
+                }
             }
-            catch (AssertFailedException)
-            {
-                // Si no capturo l'error aquí, passaria pel "catch (Exception ex)" i el test acabaria bé.
-                throw;
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
+
+            System.Diagnostics.Debug.WriteLine("\nFinal");
         }
 
+        /// <summary>
+        /// Fa un traspàs de fons.
+        /// </summary>
+        [TestMethod]
+        public void TraspasFons()
+        {
+            return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
+
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Carme);
+
+            var files = sessio.Database.ExecuteSqlCommand("DELETE from [Moviments] where [UsuariId] = 2 AND [Id] > 168");
+
+            using (var conn = new InversionsBDContext())
+            {
+                using (var dbContextTransaction = conn.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        System.Diagnostics.Debug.WriteLine("********** Inici **********");
+
+                        var prodVenda = conn.ProdFons.Single(w => w.Id == 15);
+                        var prodCompra = conn.ProdFons.Single(w => w.Id == 16);
+
+                        var dataVenda = new DateTime(2017, 11, 6, 11, 30, 00); // 06/11/2017 11:30:00
+
+                        const double participacionsVenda = 2500;
+                        const double preuParticipacioVenda = 10.08;
+                        const string descripcio = "";
+                        const double participacionsCompra = 57.3069;
+
+                        prodVenda.desaTraspas(conn, dataVenda, participacionsVenda, preuParticipacioVenda, descripcio, dataVenda.AddSeconds(1)
+                            , prodCompra, participacionsCompra);
+
+                        conn.SaveChanges();
+
+                        dbContextTransaction.Commit();
+                    }
+                    catch (Exception)
+                    {
+                        dbContextTransaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("\nFinal");
+        }
+
+        #endregion *** Modifiquen dades ***
+
+
+
+        #region *** Test ***
 
         [TestMethod]
         public void TestDesgloçCompres()
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            var compraX = sessio.Moviments.Single(w => w.Id == 41);
+
+            Assert.AreEqual(1, compraX.DesglosCompres.Count(), "Número de files desgloç incorrecte");
+
+            foreach (var desglosCompra in compraX.DesglosCompres)
+            {
+                if (desglosCompra.MovimentOrig.Id == 7)
+                {
+                    //MovId=41. MovOrigId=7. ParticipacionsDelMoviment=0.347200000000015. ParticipacionsDelMovimentOrigen=2.55975192993167
+                    Assert.AreEqual(174.229, Math.Round(desglosCompra.Participacions, 4));
+                    Assert.AreEqual(15, Math.Round(desglosCompra.ParticipacionsOrig, 4));
+                }
+                else
+                {
+                    throw new AssertFailedException(String.Format("Aquesta fila no correspon{0}. ", desglosCompra.ToString()));
+                }
+            }
+
+
+            compraX = sessio.Moviments.Single(w => w.Id == 92);
+
+            Assert.AreEqual(4, compraX.DesglosCompres.Count(), "Número de files desgloç incorrecte");
+
+            foreach (var desglosCompra in compraX.DesglosCompres)
+            {
+                if (desglosCompra.MovimentOrig.Id == 15)
+                {
+                    //Id=41. MovId=31. MovOrigId=15. ParticipacionsDelMoviment=39.354. ParticipacionsDelMovimentOrigen=679.64
+                    Assert.AreEqual(443.134, Math.Round(desglosCompra.Participacions, 4));
+                    Assert.AreEqual(679.64, Math.Round(desglosCompra.ParticipacionsOrig, 4));
+                }
+                else if (desglosCompra.MovimentOrig.Id == 16)
+                {
+                    //Id=42. MovId=31. MovOrigId=16. ParticipacionsDelMoviment=76.9523. ParticipacionsDelMovimentOrigen=547.6451
+                    Assert.AreEqual(866.4984, Math.Round(desglosCompra.Participacions, 4));
+                    Assert.AreEqual(547.6451, Math.Round(desglosCompra.ParticipacionsOrig, 4));
+                }
+                else if (desglosCompra.MovimentOrig.Id == 17)
+                {
+                    //Id=43. MovId=31. MovOrigId=17. ParticipacionsDelMoviment=141.6462. ParticipacionsDelMovimentOrigen=1008.0512
+                    Assert.AreEqual(1598.8742, Math.Round(desglosCompra.Participacions, 4));
+                    Assert.AreEqual(1010.611, Math.Round(desglosCompra.ParticipacionsOrig, 4));
+                }
+                else if (desglosCompra.MovimentOrig.Id == 27)
+                {
+                    //Id=44. MovId=31. MovOrigId=27. ParticipacionsDelMoviment=1.23029999999997. ParticipacionsDelMovimentOrigen=11.1955917196529
+                    Assert.AreEqual(13.8534, Math.Round(desglosCompra.Participacions, 4));
+                    Assert.AreEqual(11.1956, Math.Round(desglosCompra.ParticipacionsOrig, 4));
+                }
+                else
+                {
+                    throw new AssertFailedException(String.Format("Aquesta fila no correspon{0}. ", desglosCompra.ToString()));
+                }
+            }
+
 
             var compra = sessio.Moviments.Single(w => w.Id == 91).TestCompresDeLaVenda(sessio).ToList();
 
@@ -110,45 +227,79 @@ namespace UnitTestInversions
                     throw new AssertFailedException(String.Format("Aquesta fila no correspon{0}. ", mdc.ToString()));
                 }
             }
-            return;
         }
+
 
         /// <summary>
         /// Esborra la taula "DesglosCompres" i la crea de nou.
         /// </summary>
         [TestMethod]
-        public void GeneraDesgloçCompres()
+        public void TestPreuOriginal()
         {
-            return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
-
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            sessio.Database.ExecuteSqlCommand("TRUNCATE TABLE [DesglosCompres]");
+            System.Diagnostics.Debug.WriteLine("********** Inici **********");
 
-            using (var conn = new InversionsBDContext())
+            int oks = 0, kos =0;
+
+            foreach (var compra in sessio.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
             {
-                using (var dbContextTransaction = conn.Database.BeginTransaction())
+                var costTotalOrig = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig * s._PreuPartOrig);
+                var preuUnitOrig = Math.Round(costTotalOrig / compra.Participacions, 4);
+                var preuOrigAnt = Math.Round(compra.PreuParticipacioOrigen.GetValueOrDefault(), 4);
+                var dif = Math.Round(preuUnitOrig - preuOrigAnt, 2);
+
+                if (dif > 0)
                 {
-                    try
-                    {
-                        System.Diagnostics.Debug.WriteLine("********** Inici **********");
-
-                        foreach (var co in sessio.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
-                        {
-                            co.desgloçarCompra(conn);
-                        }
-
-                        dbContextTransaction.Commit();
-                    }
-                    catch (Exception)
-                    {
-                        dbContextTransaction.Rollback();
-                        throw;
-                    }
+                    System.Diagnostics.Debug.WriteLine("MovId = {0}\tDif = {3}\tpreuUnitOrig = {1}\tpreuOrigAnt = {2}", compra.Id, preuUnitOrig, preuOrigAnt, dif);
+                    kos++;
+                }
+                else
+                {
+                    oks++;
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine("\nFinal");
+            System.Diagnostics.Debug.WriteLine("\nOks={0}. Kos={1}", oks, kos);
+
+            Assert.IsTrue(kos == 0, "\nHi ha compres que no quadren");
+            System.Diagnostics.Debug.WriteLine("Final");
+        }
+
+
+        [TestMethod]
+        public void ComprovaDatesMovDuplicades()
+        {
+            try
+            {
+                InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+                bool totOk = true;
+
+                System.Diagnostics.Debug.WriteLine("********** Inici Comprovació dates **********");
+                DateTime dataAnt = DateTime.MinValue;
+                foreach (var mov in sessio.Moviments.OrderBy(o => o.Data).ToList())
+                {
+                    if (dataAnt == mov.Data)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Data duplicada. {0}. IdMov.{1}", dataAnt, mov.Id);
+                        totOk = false;
+                    }
+                    dataAnt = mov.Data;
+                }
+                System.Diagnostics.Debug.WriteLine("********** Final Comprovació dates **********");
+
+                Assert.IsTrue(totOk, "Hi ha dates duplicades");
+            }
+            catch (AssertFailedException)
+            {
+                // Si no capturo l'error aquí, passaria pel "catch (Exception ex)" i el test acabaria bé.
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
 
@@ -174,73 +325,7 @@ namespace UnitTestInversions
                     comprovaMoviment(compres[1], 92, 2877.415);
                 }
             }
-                //catch (AssertFailedException) {}
-            catch (Exception es)
-            {
-                System.Diagnostics.Debug.WriteLine("\nError" + es.Message);
-            }
-
-            System.Diagnostics.Debug.WriteLine("\nFinal");
-        }
-
-
-        [TestMethod]
-        public void CompresOrigDunaVenda()
-        {
-            try
-            {
-                InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
-
-                var venda = sessio.Moviments.Single(s => s.Id == 30);
-
-                var compresOrig = venda.__CompresOriginalsAnteriors().ToList();
-                var costOrigAntic = venda.Participacions * venda.PreuParticipacioOrigen;
-                var costOrigNou = compresOrig.Sum(s => s._ParticipacionsDisponibles * s._Moviment.PreuParticipacio);
-                var dif = costOrigAntic - costOrigNou;
-
-
-                var sumPart = compresOrig.Sum(s => s._ParticipacionsDisponibles);
-
-
-                foreach (var movimentCompra in compresOrig)
-                {
-                    System.Diagnostics.Debug.WriteLine("\nId: {0}; Participacions Disponibles: {1}",
-                        movimentCompra._Moviment.Id, movimentCompra._ParticipacionsDisponibles);
-                }
-                System.Diagnostics.Debug.WriteLine("\n");
-
-                foreach (var movimentCompra in compresOrig)
-                {
-                    if (movimentCompra._Moviment.Id == 27)
-                        Assert.AreEqual(58.502, movimentCompra._ParticipacionsDisponibles, 0.001, "Count incorrecte");
-                    else if (movimentCompra._Moviment.Id == 16)
-                        Assert.AreEqual(547.645, movimentCompra._ParticipacionsDisponibles, 0.001, "Count incorrecte");
-                    else if (movimentCompra._Moviment.Id == 17)
-                        Assert.AreEqual(1010.611, movimentCompra._ParticipacionsDisponibles, 0.001, "Count incorrecte");
-                    else if (movimentCompra._Moviment.Id == 15)
-                        Assert.AreEqual(678.178, movimentCompra._ParticipacionsDisponibles, 0.001, "Count incorrecte");
-                    //Assert.AreEqual(678.145, movimentCompra._ParticipacionsDisponibles, 0.001, "Count incorrecte");
-                }
-
-
-                //var prod = venda.Prod;
-                //System.Diagnostics.Debug.WriteLine("\nIdProducte: " + prod.Id);
-                //System.Diagnostics.Debug.WriteLine("Producte: " + prod._NomProducte);
-
-                //var compres = venda.compresAnteriors().ToArray();
-
-                //if (venda.Id == 100)
-                //{
-                //    Assert.AreEqual(2, compres.Count(), 0, "Count incorrecte");
-
-                //    comprovaMoviment(compres[0], 29, 1.827);
-                //    comprovaMoviment(compres[1], 92, 2877.415);
-                //}
-            }
-            catch (AssertFailedException)
-            {
-                throw;
-            }
+            //catch (AssertFailedException) {}
             catch (Exception es)
             {
                 System.Diagnostics.Debug.WriteLine("\nError" + es.Message);
@@ -282,7 +367,8 @@ namespace UnitTestInversions
 
             System.Diagnostics.Debug.WriteLine("\nFinal");
         }
-
+        
+        #endregion *** Test ***
 
         private static void comprovaMoviment(MovimentCompra compra, int id, double part)
         {
