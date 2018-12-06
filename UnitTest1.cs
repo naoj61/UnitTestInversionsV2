@@ -32,27 +32,19 @@ namespace UnitTestInversions
                 {
                     // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
                     Usuari.Seleccionat = usu;
-
-                    foreach (var co in sessio.Moviments
-                        .Where(w => w.UsuariId == usu.Id && w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
+                    
+                    using (var dbContextTransaction = conn.Database.BeginTransaction())
                     {
-                        using (var dbContextTransaction = conn.Database.BeginTransaction())
+                        foreach (var co in conn.Moviments
+                            .Where(w => w.UsuariId == usu.Id && w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
                         {
-                            try
-                            {
-                                System.Diagnostics.Debug.WriteLine("co.Id = {0}", co.Id);
+                            System.Diagnostics.Debug.WriteLine("co.Id = {0}", co.Id);
 
-                                //if(co.Id == 166)
-                                co.desgloçarCompra(conn);
-
-                                dbContextTransaction.Commit();
-                            }
-                            catch (Exception)
-                            {
-                                dbContextTransaction.Rollback();
-                                throw;
-                            }
+                            //if(co.Id == 101)
+                            co.desgloçarCompra(conn);
                         }
+                        //conn.SaveChanges();
+                        dbContextTransaction.Commit();
                     }
                 }
             }
@@ -72,46 +64,40 @@ namespace UnitTestInversions
             // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            var files = sessio.Database.ExecuteSqlCommand("DELETE from [DesglosCompres] where [Id] >= 86");
-            files = sessio.Database.ExecuteSqlCommand("DELETE from [Moviments] where[Id] >= 175");
-            
+            const int idDel = 2200;
+            var files = sessio.Database.ExecuteSqlCommand("DELETE from [DesglosCompres] where [RefCompraId] > " + idDel);
+            files = sessio.Database.ExecuteSqlCommand("DELETE from [Moviments] where[Id] > " + idDel);
+
             using (var conn = new InversionsBDContext())
             {
                 using (var dbContextTransaction = conn.Database.BeginTransaction())
                 {
-                    try
-                    {
-                        System.Diagnostics.Debug.WriteLine("********** Inici **********");
+                    System.Diagnostics.Debug.WriteLine("********** Inici **********");
 
-                        //var prodVenda = conn.ProdFons.Single(w => w.Id == 16);
-                        //var prodCompra = conn.ProdFons.Single(w => w.Id == 11);
-                        //var dataVenda = new DateTime(2017, 11, 6, 11, 30, 00); // 06/11/2017 11:30:00
-                        //const double participacionsVenda = 2500;
-                        //const double preuParticipacioVenda = 10.08;
-                        //const string descripcio = "";
-                        //const double participacionsCompra = 57.3069;
+                    //var prodVenda = conn.ProdFons.Single(w => w.Id == 16);
+                    //var prodCompra = conn.ProdFons.Single(w => w.Id == 11);
+                    //var dataVenda = new DateTime(2017, 11, 6, 11, 30, 00); // 06/11/2017 11:30:00
+                    //const double participacionsVenda = 2500;
+                    //const double preuParticipacioVenda = 10.08;
+                    //const string descripcio = "";
+                    //const double participacionsCompra = 57.3069;
 
-                        var prodVenda = conn.ProdFons.Single(w => w.Id == 16);
-                        var prodCompra = conn.ProdFons.Single(w => w.Id == 11);
-                        var dataVenda = DateTime.Now;
+                    var prodVenda = conn.ProdFons.Single(w => w.Id == 16);
+                    var prodCompra = conn.ProdFons.Single(w => w.Id == 11);
+                    var dataVenda = DateTime.Now;
 
-                        const double participacionsVenda = 60;
-                        const double preuParticipacioVenda = 400;
-                        const string descripcio = null;
-                        const double participacionsCompra = 1000;
+                    const double participacionsVenda = 60;
+                    const double preuParticipacioVenda = 400;
+                    const string descripcio = null;
+                    const double participacionsCompra = 1000;
 
-                        prodVenda.desaTraspas(conn, dataVenda, participacionsVenda, preuParticipacioVenda, descripcio, dataVenda.AddSeconds(1)
-                            , prodCompra, participacionsCompra);
+                    prodVenda.desaTraspas(conn, dataVenda, participacionsVenda, preuParticipacioVenda, descripcio, dataVenda.AddSeconds(1)
+                        , prodCompra, participacionsCompra);
 
-                        conn.SaveChanges();
+                    //prodVenda.desaCompra(conn, dataVenda, DateTime.Now.TimeOfDay, participacionsVenda, preuParticipacioVenda, 1, 0, descripcio
+                    //    , false, false);
 
-                        dbContextTransaction.Commit();
-                    }
-                    catch (Exception)
-                    {
-                        dbContextTransaction.Rollback();
-                        throw;
-                    }
+                    dbContextTransaction.Commit();
                 }
             }
 
@@ -274,41 +260,6 @@ namespace UnitTestInversions
 
 
         /// <summary>
-        /// Potser l'esborraré
-        /// </summary>
-        [TestMethod]
-        public void CompresDunaVenda()
-        {
-            try
-            {
-                InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
-
-                var venda = sessio.Moviments.Single(s => s.Id == 100);
-                var prod = venda.Prod;
-                System.Diagnostics.Debug.WriteLine("\nIdProducte: " + prod.Id);
-                System.Diagnostics.Debug.WriteLine("Producte: " + prod._NomProducte);
-
-                var compres = venda.compresAnteriors().ToArray();
-
-                if (venda.Id == 100)
-                {
-                    Assert.AreEqual(2, compres.Count(), 0, "Count incorrecte");
-
-                    comprovaMoviment(compres[0], 29, 1.827);
-                    comprovaMoviment(compres[1], 92, 2877.415);
-                }
-            }
-            //catch (AssertFailedException) {}
-            catch (Exception es)
-            {
-                System.Diagnostics.Debug.WriteLine("\nError" + es.Message);
-            }
-
-            System.Diagnostics.Debug.WriteLine("\nFinal");
-        }
-
-
-        /// <summary>
         /// Comprova el càlcul del preu origen en els traspassos de fons.
         /// </summary>
         [TestMethod]
@@ -422,7 +373,7 @@ namespace UnitTestInversions
                 if (dif > 0)
                 {
                     System.Diagnostics.Debug.WriteLine("MovId = {0}\tDif = {3}\tpreuUnitOrig = {1}\tpreuOrigAnt = {2}"
-                        , compra.Id, preuUnitOrig, preuOrigAnt, dif);
+                        , compra.Id, preuUnitOrig.ToString("#,##0.00€"), preuOrigAnt.ToString("#,##0.00€"), dif.ToString("#,##0.00€"));
                     kos++;
                 }
                 else
@@ -458,15 +409,6 @@ namespace UnitTestInversions
 
             return sessio;
         }
-
-
-        private static void comprovaMoviment(MovimentCompra compra, int id, double part)
-        {
-            System.Diagnostics.Debug.WriteLine("\nIdMov={0}. _ParticipacionsDisponibles={1}",
-                compra._Moviment.Id, compra._ParticipacionsDisponibles.ToString("0.000"));
-            Assert.AreEqual(id, compra._Moviment.Id, 0, "Num Participacions Disponibles incorrecte");
-            Assert.AreEqual(part, compra._ParticipacionsDisponibles, 0.001, "Num Participacions Disponibles incorrecte");
-        } 
 
         #endregion *** Mètodes ***
     }
