@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Data.Entity.Core;
 using System.Globalization;
 using System.Linq;
@@ -11,6 +12,51 @@ namespace UnitTestInversions
     public class UnitTestInversions
     {
         #region *** Modifiquen dades ***
+
+        #region *** Executar un cop sobre la BD de la versió: 1.9.5.3 ***
+
+        //[TestMethod]
+        public void ModificaEstruturaTaulaMoviments()
+        {
+            //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
+
+            var sessio = new InversionsBDContext();
+
+            sessio.Database.ExecuteSqlCommand("EXEC sp_RENAME 'DesglosCompres.RefCompraId' , 'MovCompraId', 'COLUMN'");
+            sessio.Database.ExecuteSqlCommand("EXEC sp_RENAME 'DesglosCompres.RefCompraOrigId' , 'MovCompraOrigId', 'COLUMN'");
+            
+            sessio.Database.ExecuteSqlCommand("ALTER TABLE [Moviments] DROP CONSTRAINT [FK_ProducteMoviment]");
+            sessio.Database.ExecuteSqlCommand("DROP INDEX [Moviments].[IX_FK_ProducteMoviment]");
+            sessio.Database.ExecuteSqlCommand("ALTER TABLE [Moviments] DROP COLUMN [ProducteTraspasId]");
+        }
+
+        /// <summary>
+        /// En els trapassos, informa MovimentRefVendaId(MovimentRefTraspasId) de les vendes.
+        /// </summary>
+        //[TestMethod]
+        public void CreaMovimentRefVendaIdEnVendesTraspassades()
+        {
+            int cont = 0;
+            using (var conn = new InversionsBDContext())
+            {
+                using (var dbContextTransaction = conn.Database.BeginTransaction())
+                {
+                    System.Diagnostics.Debug.WriteLine("********** Inici **********");
+
+                    foreach (var movCompraTraspas in conn.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra && w.MovimentRefVendaId != null))
+                    {
+                        var movVendaTraspas = conn.Moviments.Single(w => w.Id == movCompraTraspas.MovimentRefVendaId);
+                        movVendaTraspas.MovimentRefVendaId = movCompraTraspas.Id;
+                        conn.SaveChanges();
+                        cont++;
+                    }
+
+                    dbContextTransaction.Commit();
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("\nFinal. Files modificades: {0}", cont);
+        }
 
         /// <summary>
         /// Esborra la taula "DesglosCompres" i la crea de nou.
@@ -32,7 +78,7 @@ namespace UnitTestInversions
                 {
                     // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
                     Usuari.Seleccionat = usu;
-                    
+
                     using (var dbContextTransaction = conn.Database.BeginTransaction())
                     {
                         foreach (var co in conn.Moviments
@@ -52,6 +98,7 @@ namespace UnitTestInversions
             System.Diagnostics.Debug.WriteLine("\nFinal");
         }
 
+        #endregion *** Executar un cop sobre la BD de la versió: 1.9.5.3 ***
 
         /// <summary>
         /// Fa un traspàs de fons.
@@ -64,8 +111,8 @@ namespace UnitTestInversions
             // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            const int idDel = 2200;
-            var files = sessio.Database.ExecuteSqlCommand("DELETE from [DesglosCompres] where [RefCompraId] > " + idDel);
+            const int idDel = 168;
+            var files = sessio.Database.ExecuteSqlCommand("DELETE from [DesglosCompres] where [MovCompraId] > " + idDel);
             files = sessio.Database.ExecuteSqlCommand("DELETE from [Moviments] where[Id] > " + idDel);
 
             using (var conn = new InversionsBDContext())
@@ -118,13 +165,13 @@ namespace UnitTestInversions
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            var compraX = sessio.Moviments.Single(w => w.Id == 41);
+            var compraT = sessio.Moviments.Single(w => w.Id == 41);
 
-            Assert.AreEqual(1, compraX.DesglosCompres.Count(), "Número de files desgloç incorrecte");
+            Assert.AreEqual(1, compraT.DesglosCompres.Count(), "Número de files desgloç incorrecte");
 
-            foreach (var desglosCompra in compraX.DesglosCompres)
+            foreach (var desglosCompra in compraT.DesglosCompres)
             {
-                if (desglosCompra.RefCompraOrigId == 7)
+                if (desglosCompra.MovCompraOrigId == 7)
                 {
                     //MovId=41. MovOrigId=7. ParticipacionsDelMoviment=0.347200000000015. ParticipacionsDelMovimentOrigen=2.55975192993167
                     Assert.AreEqual(174.229, Math.Round(desglosCompra.Participacions, 4));
@@ -137,31 +184,31 @@ namespace UnitTestInversions
             }
 
 
-            compraX = sessio.Moviments.Single(w => w.Id == 92);
+            compraT = sessio.Moviments.Single(w => w.Id == 92);
 
-            Assert.AreEqual(4, compraX.DesglosCompres.Count(), "Número de files desgloç incorrecte");
+            Assert.AreEqual(4, compraT.DesglosCompres.Count(), "Número de files desgloç incorrecte");
 
-            foreach (var desglosCompra in compraX.DesglosCompres)
+            foreach (var desglosCompra in compraT.DesglosCompres)
             {
-                if (desglosCompra.RefCompraOrigId == 15)
+                if (desglosCompra.MovCompraOrigId == 15)
                 {
                     //Id=41. MovId=31. MovOrigId=15. ParticipacionsDelMoviment=39.354. ParticipacionsDelMovimentOrigen=679.64
                     Assert.AreEqual(443.134, Math.Round(desglosCompra.Participacions, 4));
                     Assert.AreEqual(679.64, Math.Round(desglosCompra.ParticipacionsOrig, 4));
                 }
-                else if (desglosCompra.RefCompraOrigId == 16)
+                else if (desglosCompra.MovCompraOrigId == 16)
                 {
                     //Id=42. MovId=31. MovOrigId=16. ParticipacionsDelMoviment=76.9523. ParticipacionsDelMovimentOrigen=547.6451
                     Assert.AreEqual(866.4984, Math.Round(desglosCompra.Participacions, 4));
                     Assert.AreEqual(547.6451, Math.Round(desglosCompra.ParticipacionsOrig, 4));
                 }
-                else if (desglosCompra.RefCompraOrigId == 17)
+                else if (desglosCompra.MovCompraOrigId == 17)
                 {
                     //Id=43. MovId=31. MovOrigId=17. ParticipacionsDelMoviment=141.6462. ParticipacionsDelMovimentOrigen=1008.0512
                     Assert.AreEqual(1598.8742, Math.Round(desglosCompra.Participacions, 4));
                     Assert.AreEqual(1010.611, Math.Round(desglosCompra.ParticipacionsOrig, 4));
                 }
-                else if (desglosCompra.RefCompraOrigId == 27)
+                else if (desglosCompra.MovCompraOrigId == 27)
                 {
                     //Id=44. MovId=31. MovOrigId=27. ParticipacionsDelMoviment=1.23029999999997. ParticipacionsDelMovimentOrigen=11.1955917196529
                     Assert.AreEqual(13.8534, Math.Round(desglosCompra.Participacions, 4));
@@ -180,31 +227,31 @@ namespace UnitTestInversions
 
             foreach (var mdc in compres)
             {
-                if (mdc._DesglosCompra.RefCompraId == 26 && mdc._DesglosCompra.RefCompraOrigId == 17)
+                if (mdc._DesglosCompra.MovCompraId == 26 && mdc._DesglosCompra.MovCompraOrigId == 17)
                 {
                     //Id=24. MovId=26. MovOrigId=17. ParticipacionsDelMoviment=0.347200000000015. ParticipacionsDelMovimentOrigen=2.55975192993167
                     Assert.AreEqual(0.3472, Math.Round(mdc._ParticipacionsDelMoviment, 4));
                     Assert.AreEqual(2.5598, Math.Round(mdc._ParticipacionsDelMovimentOrigen, 4));
                 }
-                else if (mdc._DesglosCompra.RefCompra.Id == 31 && mdc._DesglosCompra.RefCompraOrig.Id == 15)
+                else if (mdc._DesglosCompra.MovCompra.Id == 31 && mdc._DesglosCompra.MovCompraOrig.Id == 15)
                 {
                     //Id=41. MovId=31. MovOrigId=15. ParticipacionsDelMoviment=39.354. ParticipacionsDelMovimentOrigen=679.64
                     Assert.AreEqual(39.354, Math.Round(mdc._ParticipacionsDelMoviment, 4));
                     Assert.AreEqual(679.64, Math.Round(mdc._ParticipacionsDelMovimentOrigen, 4));
                 }
-                else if (mdc._DesglosCompra.RefCompra.Id == 31 && mdc._DesglosCompra.RefCompraOrig.Id == 16)
+                else if (mdc._DesglosCompra.MovCompra.Id == 31 && mdc._DesglosCompra.MovCompraOrig.Id == 16)
                 {
                     //Id=42. MovId=31. MovOrigId=16. ParticipacionsDelMoviment=76.9523. ParticipacionsDelMovimentOrigen=547.6451
                     Assert.AreEqual(76.9523, Math.Round(mdc._ParticipacionsDelMoviment, 4));
                     Assert.AreEqual(547.6451, Math.Round(mdc._ParticipacionsDelMovimentOrigen, 4));
                 }
-                else if (mdc._DesglosCompra.RefCompra.Id == 31 && mdc._DesglosCompra.RefCompraOrig.Id == 17)
+                else if (mdc._DesglosCompra.MovCompra.Id == 31 && mdc._DesglosCompra.MovCompraOrig.Id == 17)
                 {
                     //Id=43. MovId=31. MovOrigId=17. ParticipacionsDelMoviment=141.6462. ParticipacionsDelMovimentOrigen=1008.0512
                     Assert.AreEqual(141.6462, Math.Round(mdc._ParticipacionsDelMoviment, 4));
                     Assert.AreEqual(1008.0512, Math.Round(mdc._ParticipacionsDelMovimentOrigen, 4));
                 }
-                else if (mdc._DesglosCompra.RefCompra.Id == 31 && mdc._DesglosCompra.RefCompraOrig.Id == 27)
+                else if (mdc._DesglosCompra.MovCompra.Id == 31 && mdc._DesglosCompra.MovCompraOrig.Id == 27)
                 {
                     //Id=44. MovId=31. MovOrigId=27. ParticipacionsDelMoviment=1.23029999999997. ParticipacionsDelMovimentOrigen=11.1955917196529
                     Assert.AreEqual(1.2303, Math.Round(mdc._ParticipacionsDelMoviment, 4));
@@ -267,11 +314,16 @@ namespace UnitTestInversions
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
+            var thailand = sessio.ProdFons.Single(w => w.Id == 13);
+
+            var pig = thailand.pigTributa();
+            var pig2013 = thailand.pigTributa(2013);
+
             double preuOrig;
             var mov = sessio.Moviments.Single(s => s.Id == 25);
             if (mov.TipusMoviment == TipusMoviment.Compra)
             {
-                var venda = mov.MovimentRefVenda;
+                var venda = mov.MovimentRefVendaN;
                 preuOrig = venda.Participacions * venda.PreuParticipacioOrigen.Value / mov.Participacions;
                 Assert.AreEqual(mov.PreuParticipacioOrigen.GetValueOrDefault(), preuOrig, 0.001, "Preu origen no coincideix");
             }
@@ -313,8 +365,8 @@ namespace UnitTestInversions
             {
                 // *** Només un producte.
                 var prod = sessio.Productes.Single(w => w.Id == prodId.Value);
-                var costAntic = prod.costEnCarteraMetodeAntic(data);
-                var costnou = prod.costEnCartera(data);
+                var costAntic = prod.costOriginalEnCarteraMetodeAntic(data);
+                var costnou = prod.costOriginalEnCartera(data);
                 var dif = costAntic - costnou;
 
                 System.Diagnostics.Debug.WriteLine("\nProducte: {0}-{1}", prod.Id, prod._NomProducte);
@@ -330,8 +382,8 @@ namespace UnitTestInversions
                 {
                     if (prod.MovimentsProducteUsuari.Any())
                     {
-                        var costAntic = prod.costEnCarteraMetodeAntic(data);
-                        var costnou = prod.costEnCartera(data);
+                        var costAntic = prod.costOriginalEnCarteraMetodeAntic(data);
+                        var costnou = prod.costOriginalEnCartera(data);
                         var dif = costAntic - costnou;
 
                         if (Math.Abs(dif) > .01)
@@ -348,8 +400,9 @@ namespace UnitTestInversions
 
             System.Diagnostics.Debug.WriteLine("\nDif total = {0}", difTot);
 
+            Assert.IsTrue(Math.Abs(difTot) < 1.0, "\nLa diferencia és massa gran. Dif={0}", difTot);
         }
-        
+
 
         /// <summary>
         /// Compara els preu originals amb el sistema nou i amb l'antic  a nivell de moviment compra.
@@ -361,7 +414,7 @@ namespace UnitTestInversions
 
             System.Diagnostics.Debug.WriteLine("********** Inici **********");
 
-            int oks = 0, kos =0;
+            int oks = 0, kos = 0;
 
             foreach (var compra in sessio.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
             {
@@ -389,6 +442,105 @@ namespace UnitTestInversions
         }
 
 
+        /// <summary>
+        /// 
+        /// </summary>
+        [TestMethod]
+        public void TestPigEnCartera()
+        {
+            // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+            var difTot = 0.0;
+
+            foreach (var producte in sessio.Productes)
+            {
+                var pigAnt = producte.costOriginalEnCarteraMetodeAntic();
+                var pigAct = producte.costOriginalEnCartera();
+                var dif = pigAct - pigAnt;
+
+                if (Math.Abs(dif) > 0.01)
+                    System.Diagnostics.Debug.WriteLine("\nProd: {0}. Dif: {1}", producte, dif);
+
+                difTot += dif;
+            }
+
+            System.Diagnostics.Debug.WriteLine("\nDif total = {0}", difTot);
+
+            Assert.IsTrue(Math.Abs(difTot) < 1.0, "\nLa diferencia és massa gran. Dif={0}", difTot);
+        }
+
+
+        /// <summary>
+        /// Comprova que el desgloç d'unes compres determinades son els esperats.
+        /// </summary>
+        [TestMethod]
+        public void ProvesVaries()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+            
+            const int any = 2013;
+            var fons = sessio.ProdFons.Single(w => w.Id == 10);
+            var pigTrib = fons.pigTributa(any);
+            var importComAntic = fons.testImportCompraAntic(new DateTime(any, 1, 1), new DateTime(any, 12, 31));
+            var importComNou = fons.testImportCompra2(new DateTime(any, 1, 1), new DateTime(any, 12, 31));
+
+            double pigTot = 0;
+            foreach (var prodFons in sessio.ProdFons)
+            {
+                var pigT = prodFons.pigTributa(any);
+                pigTot += pigT;
+
+                if (Math.Abs(pigT) > 0)
+                    System.Diagnostics.Debug.WriteLine("\n{0}. pigT: {1}.", prodFons, pigT);
+            }
+
+            System.Diagnostics.Debug.WriteLine("\npigTot: {0}.", pigTot);
+
+            return;
+
+
+            //var ss = sessio.MovimentsUsuari.Where(w => w is ProdAccions).Count();
+            var ss = sessio.Productes.Count();
+            var ss2 = sessio.ProdAccions.Count() + sessio.ProdFons.Count();
+
+
+            foreach (var producte in sessio.Productes)
+            {
+                var pig1 = Producte.Pig(Producte.TipusProducte.Fons, DateTime.Now.AddDays(-50), DateTime.Now);
+                var pig2 = Producte.Pig(Producte.TipusProducte.Fons, 2012);
+                var diff1 = pig1 - pig2;
+
+                var pig3 = Producte.Pig(Producte.TipusProducte.Fons, DateTime.MinValue, DateTime.MaxValue);
+                var pig4 = Producte.Pig(Producte.TipusProducte.Fons);
+                var diff2 = pig3 - pig4;
+
+                var impAnt = producte.testImportCompraAntic(DateTime.MinValue, DateTime.Now);
+                var impNou = producte.testImportCompra2(DateTime.MinValue, DateTime.Now);
+                var dif = impAnt - impNou;
+                if (Math.Abs(dif) > .01)
+                    System.Diagnostics.Debug.WriteLine("\nProd: {0}. Dif: {1}", producte, dif);
+            }
+
+            return;
+
+            var compraT = sessio.Moviments.Single(w => w.Id == 41);
+            var vendaT = sessio.Moviments.Single(w => w.Id == compraT.MovimentRefVendaId);
+            var compra = sessio.Moviments.Single(w => w.Id == 1);
+            var venda = sessio.Moviments.Single(w => w.Id == 4);
+
+            var t0 = compraT.MovimentRefVenda1.Any();
+            var t1 = vendaT.MovimentRefVenda1.Any();
+            var t2 = compra.MovimentRefVenda1.Any();
+            var t3 = venda.MovimentRefVenda1.Any();
+
+            var x0 = compraT.MovimentRefVendaN;
+            var x1 = vendaT.MovimentRefVendaN;
+            var x2 = compra.MovimentRefVendaN;
+            var x3 = venda.MovimentRefVendaN;
+
+            System.Diagnostics.Debug.WriteLine("*** Fi Ok ***");
+        }
+
         #endregion *** Test ***
 
 
@@ -405,7 +557,7 @@ namespace UnitTestInversions
             sessio.Configuration.AutoDetectChangesEnabled = false; // Si poso true, dona error quan inserto una fila i l'esborro en la mateixa sessió.
             sessio.Configuration.LazyLoadingEnabled = true;
 
-            Usuari.Seleccionat = sessio.Usuaris.Single(s => s.Id == (int)usuari);
+            Usuari.Seleccionat = sessio.Usuaris.Single(s => s.Id == (int) usuari);
 
             return sessio;
         }
