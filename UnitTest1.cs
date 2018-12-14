@@ -1,10 +1,15 @@
 ﻿using System;
 using System.CodeDom;
 using System.Data.Entity.Core;
+using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using Comuns;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Inversions;
+using Microsoft.Win32;
 
 namespace UnitTestInversions
 {
@@ -346,65 +351,6 @@ namespace UnitTestInversions
 
 
         /// <summary>
-        /// Compara els preu originals amb el sistema nou i amb l'antic  a nivell de producte.
-        /// </summary>
-        [TestMethod]
-        public void ComparacioPreusCompraOrigAmbStockActual()
-        {
-            // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
-            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Carme);
-
-            var data = DateTime.MaxValue;
-            //var data = new DateTime(2015, 12, 5);
-            double difTot = 0;
-
-            int? prodId = null;
-            //prodId = 6;
-
-            if (prodId.HasValue)
-            {
-                // *** Només un producte.
-                var prod = sessio.Productes.Single(w => w.Id == prodId.Value);
-                var costAntic = prod.costOriginalEnCarteraMetodeAntic(data);
-                var costnou = prod.costOriginalEnCartera(data);
-                var dif = costAntic - costnou;
-
-                System.Diagnostics.Debug.WriteLine("\nProducte: {0}-{1}", prod.Id, prod._NomProducte);
-                System.Diagnostics.Debug.WriteLine("Mètode antic = {0}. \nMètode nou = {1}. \n\nDiferència = {2}"
-                    , costAntic.ToString("#,##0.00€"), costnou.ToString("#,##0.00€"), dif.ToString("#,##0.00€"));
-
-                difTot = dif;
-            }
-            else
-            {
-                // *** Tos els productes del usuari.
-                foreach (var prod in sessio.Productes)
-                {
-                    if (prod.MovimentsProducteUsuari.Any())
-                    {
-                        var costAntic = prod.costOriginalEnCarteraMetodeAntic(data);
-                        var costnou = prod.costOriginalEnCartera(data);
-                        var dif = costAntic - costnou;
-
-                        if (Math.Abs(dif) > .01)
-                        {
-                            difTot += dif;
-
-                            System.Diagnostics.Debug.WriteLine("\nProducte: {0}-{1}", prod.Id, prod._NomProducte);
-                            System.Diagnostics.Debug.WriteLine("Mètode antic = {0}. \tMètode nou = {1}. \tDiferència = {2}"
-                                , costAntic.ToString("#,##0.00€"), costnou.ToString("#,##0.00€"), dif.ToString("#,##0.00€"));
-                        }
-                    }
-                }
-            }
-
-            System.Diagnostics.Debug.WriteLine("\nDif total = {0}", difTot);
-
-            Assert.IsTrue(Math.Abs(difTot) < 1.0, "\nLa diferencia és massa gran. Dif={0}", difTot);
-        }
-
-
-        /// <summary>
         /// Compara els preu originals amb el sistema nou i amb l'antic  a nivell de moviment compra.
         /// </summary>
         [TestMethod]
@@ -443,34 +389,6 @@ namespace UnitTestInversions
 
 
         /// <summary>
-        /// 
-        /// </summary>
-        [TestMethod]
-        public void TestPigEnCartera()
-        {
-            // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
-            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
-            var difTot = 0.0;
-
-            foreach (var producte in sessio.Productes)
-            {
-                var pigAnt = producte.costOriginalEnCarteraMetodeAntic();
-                var pigAct = producte.costOriginalEnCartera();
-                var dif = pigAct - pigAnt;
-
-                if (Math.Abs(dif) > 0.01)
-                    System.Diagnostics.Debug.WriteLine("\nProd: {0}. Dif: {1}", producte, dif);
-
-                difTot += dif;
-            }
-
-            System.Diagnostics.Debug.WriteLine("\nDif total = {0}", difTot);
-
-            Assert.IsTrue(Math.Abs(difTot) < 1.0, "\nLa diferencia és massa gran. Dif={0}", difTot);
-        }
-
-
-        /// <summary>
         /// Comprova que el desgloç d'unes compres determinades son els esperats.
         /// </summary>
         [TestMethod]
@@ -478,50 +396,6 @@ namespace UnitTestInversions
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
             
-            const int any = 2013;
-            var fons = sessio.ProdFons.Single(w => w.Id == 10);
-            var pigTrib = fons.pigTributa(any);
-            var importComAntic = fons.testImportCompraAntic(new DateTime(any, 1, 1), new DateTime(any, 12, 31));
-            var importComNou = fons.testImportCompra2(new DateTime(any, 1, 1), new DateTime(any, 12, 31));
-
-            double pigTot = 0;
-            foreach (var prodFons in sessio.ProdFons)
-            {
-                var pigT = prodFons.pigTributa(any);
-                pigTot += pigT;
-
-                if (Math.Abs(pigT) > 0)
-                    System.Diagnostics.Debug.WriteLine("\n{0}. pigT: {1}.", prodFons, pigT);
-            }
-
-            System.Diagnostics.Debug.WriteLine("\npigTot: {0}.", pigTot);
-
-            return;
-
-
-            //var ss = sessio.MovimentsUsuari.Where(w => w is ProdAccions).Count();
-            var ss = sessio.Productes.Count();
-            var ss2 = sessio.ProdAccions.Count() + sessio.ProdFons.Count();
-
-
-            foreach (var producte in sessio.Productes)
-            {
-                var pig1 = Producte.Pig(Producte.TipusProducte.Fons, DateTime.Now.AddDays(-50), DateTime.Now);
-                var pig2 = Producte.Pig(Producte.TipusProducte.Fons, 2012);
-                var diff1 = pig1 - pig2;
-
-                var pig3 = Producte.Pig(Producte.TipusProducte.Fons, DateTime.MinValue, DateTime.MaxValue);
-                var pig4 = Producte.Pig(Producte.TipusProducte.Fons);
-                var diff2 = pig3 - pig4;
-
-                var impAnt = producte.testImportCompraAntic(DateTime.MinValue, DateTime.Now);
-                var impNou = producte.testImportCompra2(DateTime.MinValue, DateTime.Now);
-                var dif = impAnt - impNou;
-                if (Math.Abs(dif) > .01)
-                    System.Diagnostics.Debug.WriteLine("\nProd: {0}. Dif: {1}", producte, dif);
-            }
-
-            return;
 
             var compraT = sessio.Moviments.Single(w => w.Id == 41);
             var vendaT = sessio.Moviments.Single(w => w.Id == compraT.MovimentRefVendaId);
