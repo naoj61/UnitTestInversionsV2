@@ -26,7 +26,7 @@ namespace UnitTestInversions
         //[TestMethod]
         public void ModificaEstruturaTaulaMoviments()
         {
-            //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
+            return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
 
             var sessio = new InversionsBDContext();
 
@@ -108,6 +108,26 @@ namespace UnitTestInversions
 
         #endregion *** Executar un cop sobre la BD de la versió: 1.9.5.3 ***
 
+
+        /// <summary>
+        /// Elimina camp PreuParticipacioOrigen de la taula Moviments
+        /// </summary>
+        [TestMethod]
+        public void ModificaEstruturaTaulaMoviments2()
+        {
+            try
+            {
+                var sessio = new InversionsBDContext();
+                sessio.Database.ExecuteSqlCommand("ALTER TABLE [Moviments] DROP COLUMN [PreuParticipacioOrigen]");
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+
+
         /// <summary>
         /// Fa un traspàs de fons.
         /// </summary>
@@ -159,121 +179,49 @@ namespace UnitTestInversions
             System.Diagnostics.Debug.WriteLine("\nFinal");
         }
 
-
-        /// <summary>
-        /// Les accions sempre han de tenir el preu oigen igual al real.
-        /// </summary>
-        [TestMethod]
-        public void IgualaPreuOrigenAmbRealEnAccions()
-        {
-            using (var conn = new InversionsBDContext())
-            {
-                using (var dbContextTransaction = conn.Database.BeginTransaction())
-                {
-                    var movsAccions = conn.Moviments.Where(w => w.Prod is ProdAccions).ToList();
-
-                    foreach (var movsAccio in movsAccions)
-                    {
-                        if (movsAccio.PreuParticipacio != movsAccio._PreuCompraParticipacioOrigen)
-                        {
-                            movsAccio._PreuCompraParticipacioOrigen = movsAccio.PreuParticipacio;
-                            conn.Moviments.AddOrUpdate(movsAccio);
-                            conn.SaveChanges();
-                        }
-                    }
-
-                    dbContextTransaction.Commit();
-                }
-            }
-
-            Debug.WriteLine("*** Fi Ok ***");
-        }
-
         #endregion *** Modifiquen dades ***
 
 
 
         #region *** Test ***
 
-
         /// <summary>
         /// 
         /// </summary>
         [TestMethod]
-        public void PreuPartOrigTest()
+        public void ProvaTraspasMesCompra()
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+            var prodOrig = sessio.Productes.Single(w => w.Id == 6);
+            var prodDest = sessio.Productes.Single(w => w.Id == 1);
+            var ccc1 = prodDest.MovimentsProducteUsuari;
+            //var ccc = prodDest.Moviments.Where(w => w.UsuariId == Usuari.Seleccionat.Id);
 
-            var compres = sessio.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra).ToList();
-
-            int contErrors = 0;
-            foreach (var compra in compres)
+            using (var conn = new InversionsBDContext())
             {
-                var preuOrig = Math.Round(compra._PreuParticipacioOrigen2Test, 4);
-                var preuOrigAnt = Math.Round(compra._PreuCompraParticipacioOrigen.GetValueOrDefault(compra.PreuParticipacio), 4);
-
-                if (Math.Abs(preuOrig - preuOrigAnt) > 1)
+                using (var dbContextTransaction = conn.Database.BeginTransaction())
                 {
-                    contErrors++;
-                    Debug.WriteLine("Preus no coincideixen Id:{0}\tpreuOrig:{1}\tpreuOrigAnt:{2}\tDif:{3}\tNom Prod:{4}."
-                        , compra.Id, preuOrig, preuOrigAnt, Math.Round(preuOrig - preuOrigAnt, 4), compra.Prod._NomProducte);
+                    var data = DateTime.Now.AddMinutes(-10);
+                    prodOrig.desaTraspas(conn, data, 20, 600, String.Empty, data, prodDest, 20);
+
+                    //conn.SaveChanges();
+                    dbContextTransaction.Commit();
+                }
+
+                using (var dbContextTransaction = conn.Database.BeginTransaction())
+                {
+                    var prod = conn.Productes.Single(w => w.Id == 7);
+                    var data = DateTime.Now;
+                    prod.desaCompra(conn, data, data.TimeOfDay, 100, 22, 1, 0, String.Empty);
+
+                    //conn.SaveChanges();
+                    dbContextTransaction.Commit();
                 }
             }
 
-            Debug.WriteLine("Nom Ok:{0}. Num errors:{1}", compres.Count - contErrors, contErrors);
-
-            //Moviment mov = sessio.Moviments.Single(w => w.Id == 171);
-
-            //var xx = mov._PreuParticipacioOrigen2Test;
-
             Debug.WriteLine("\n*** Fi Ok ***");
         }
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        [TestMethod]
-        public void ProvesCompresDeLaVenda()
-        {
-            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
-
-            Moviment venda = sessio.Moviments.Single(w => w.Id == 179);
-
-            var xx = venda.compresDeLaVendaTest();
-
-            Debug.WriteLine("\n*** Fi Ok ***");
-        }
-
-        /// <summary>
-        /// Comprova que les accions tenen el PreuParticipacio i el PreuParticipacioOrigen, iguals.
-        /// </summary>
-        [TestMethod]
-        public void TestPreusOrigenEnAccions()
-        {
-            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
-            var movsAccions = sessio.Moviments.Where(w => w.Prod is ProdAccions).ToList();
-
-            var llistaErrors = new List<Moviment>();
-            foreach (var movsAccio in movsAccions)
-            {
-                if (movsAccio.PreuParticipacio != movsAccio._PreuCompraParticipacioOrigen)
-                {
-                    if (movsAccio.PreuParticipacio - movsAccio._PreuCompraParticipacioOrigen < 0.001)
-                    {
-                        continue;
-                    }
-
-                    Debug.WriteLine("Id: {0}. Prod: {1}. Data: {2}. Preu part: {3}. Preu orig: {4}",
-                        movsAccio.Id, movsAccio.Prod._NomProducte, movsAccio.Data.ToShortDateString(), movsAccio.PreuParticipacio, movsAccio._PreuCompraParticipacioOrigen);
-
-                    llistaErrors.Add(movsAccio);
-                }
-            }
-
-            Debug.WriteLine("*** Fi Ok ***");
-        }
-
+        
 
         /// <summary>
         /// 
@@ -399,7 +347,7 @@ namespace UnitTestInversions
             }
 
 
-            var compres = sessio.Moviments.Single(w => w.Id == 91).TestCompresDeLaVenda(sessio).ToList();
+            var compres = sessio.Moviments.Single(w => w.Id == 91).compresDeLaVendaTest(sessio).ToList();
 
             Assert.AreEqual(5, compres.Count(), "Número de files desgloç incorrecte");
 
@@ -502,8 +450,8 @@ namespace UnitTestInversions
             if (mov.TipusMoviment == TipusMoviment.Compra)
             {
                 var venda = mov.MovimentRefVendaN;
-                preuOrig = venda.Participacions * venda._PreuCompraParticipacioOrigen.Value / mov.Participacions;
-                Assert.AreEqual(mov._PreuCompraParticipacioOrigen.GetValueOrDefault(), preuOrig, 0.001, "Preu origen no coincideix");
+                preuOrig = venda.Participacions * venda._PreuParticipacioOrigen.GetValueOrDefault() / mov.Participacions;
+                Assert.AreEqual(mov._PreuCompraParticipacioOrigen, preuOrig, 0.001, "Preu origen no coincideix");
             }
             else
             {
@@ -512,7 +460,7 @@ namespace UnitTestInversions
                 var compresVenda = venda.compresAnteriors();
                 preuOrig = compresVenda.Sum(movimentCompra => movimentCompra._ParticipacionsDisponibles * movimentCompra._PreuParticipacioOrigenTest);
                 preuOrig = preuOrig / venda.Participacions;
-                Assert.AreEqual(venda._PreuCompraParticipacioOrigen.GetValueOrDefault(), preuOrig, 0.001, "Preu origen no coincideix");
+                Assert.AreEqual(venda._PreuCompraParticipacioOrigen, preuOrig, 0.001, "Preu origen no coincideix");
             }
 
             //venda = sessio.Moviments.Single(s => s.Id == 25);
@@ -537,14 +485,14 @@ namespace UnitTestInversions
 
             foreach (var compra in sessio.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
             {
-                var costTotalOrig = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig * s._PreuParticipacioOrig);
+                var costTotalOrig = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig * s._PreuPartOrig);
                 var preuUnitOrig = Math.Round(costTotalOrig / compra.Participacions, 4);
-                var preuOrigAnt = Math.Round(compra._PreuCompraParticipacioOrigen.GetValueOrDefault(), 4);
+                var preuOrigAnt = Math.Round(compra._PreuCompraParticipacioOrigen, 4);
                 var dif = Math.Round(preuUnitOrig - preuOrigAnt, 2);
 
                 if (dif > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("MovId = {0}\tDif = {3}\tpreuUnitOrig = {1}\tpreuOrigAnt = {2}"
+                    Debug.WriteLine("MovId = {0}\tDif = {3}\tpreuUnitOrig = {1}\tpreuOrigAnt = {2}"
                         , compra.Id, preuUnitOrig.ToString("#,##0.00€"), preuOrigAnt.ToString("#,##0.00€"), dif.ToString("#,##0.00€"));
                     kos++;
                 }
