@@ -71,9 +71,9 @@
       <Project>{83fff275-a1a1-4df4-a669-591cb12dcbb4}</Project>
       <Name>Comuns</Name>
     </ProjectReference>
-    <ProjectReference Include="..\InversionsV2\Inversions.csproj">
+    <ProjectReference Include="..\InversionsV2\InversionsV2.csproj">
       <Project>{641fba40-bcc0-488c-b3e3-fdb267af2ed9}</Project>
-      <Name>Inversions</Name>
+      <Name>InversionsV2</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
