@@ -222,48 +222,7 @@ namespace UnitTestInversions
                 throw;
             }
         }
-
-
-        /// <summary>
-        /// Comprova el càlcul del preu origen en els traspassos de fons.
-        /// </summary>
-        [TestMethod]
-        public void ComprovaCalculPreuOrigen()
-        {
-            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
-
-            var thailand = sessio.ProdFons.Single(w => w.Id == 13);
-
-            var pig = thailand.pig2TotalTest(inclouCartera: false);
-            var pig2013 = thailand.pig2TotalTest(2013);
-
-            double preuOrig;
-            var mov = sessio.Moviments.Single(s => s.Id == 25);
-            if (mov.TipusMoviment == TipusMoviment.Compra)
-            {
-                var venda = mov.MovimentRefVendaN;
-                preuOrig = venda.Participacions * venda._PreuParticipacioOrigen.GetValueOrDefault() / mov.Participacions;
-                Assert.AreEqual(mov._PreuCompraParticipacioOrigen, preuOrig, 0.001, "Preu origen no coincideix");
-            }
-            else
-            {
-                var venda = mov;
-
-                var compresVenda = venda.compresAnteriors();
-                preuOrig = compresVenda.Sum(movimentCompra => movimentCompra._ParticipacionsDisponibles * movimentCompra._PreuParticipacioOrigenTest);
-                preuOrig = preuOrig / venda.Participacions;
-                Assert.AreEqual(venda._PreuCompraParticipacioOrigen, preuOrig, 0.001, "Preu origen no coincideix");
-            }
-
-            //venda = sessio.Moviments.Single(s => s.Id == 25);
-            //venda = sessio.Moviments.Single(s => s.Id == 28);
-            //venda = sessio.Moviments.Single(s => s.Id == 30);
-
-            System.Diagnostics.Debug.WriteLine("\nFinal");
-        }
-
-
-
+        
 
         /// <summary>
         /// Compara els preu originals amb el sistema nou i amb l'antic  a nivell de moviment compra.

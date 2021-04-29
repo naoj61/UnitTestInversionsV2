@@ -184,58 +184,7 @@ namespace UnitTestInversions
             Debug.WriteLine(String.Format("PiG total: {0}", piGActual.ToString("C2")));
             Debug.WriteLine(String.Format("PiG total 2: {0}", pigtotal2.ToString("C2")));
         }
-
-
-        /// <summary>
-        /// Comprova el càlcul del preu origen en els traspassos de fons.
-        /// </summary>
-        [TestMethod]
-        public void ComprovaPigDunaVenda()
-        {
-            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
-            
-            // Biotec Id= 6. PU compra: 274,68 €	Import compra: 6.132,72 €
-            var prod = sessio.Productes.Single(w => w.Id == 6);
-            var part = prod._Participacions;
-            var compresAmbPart = prod.compresAnteriors(DateTime.Now, part); // dws._Participacions - 10);
-
-            double preuCompra = 0;
-            foreach (var movimentCompra in compresAmbPart)
-            {
-                preuCompra += movimentCompra._ParticipacionsDisponibles * movimentCompra._PreuParticipacioOrigenTest;
-            }
-
-
-            double preuCompra2 = prod.costOriginalEnCartera2Test();
-            //foreach (var movimentCompra in compresAmbPart)
-            //{
-            //    var mov = movimentCompra._Moviment;
-            //    var aa = mov.DesglosCompres;
-            //    foreach (var compOrig in mov.DesglosCompres)
-            //    {
-            //        preuCompra2 += compOrig._PreuPartOrig * compOrig.ParticipacionsOrig;
-            //    }
-            //}
-
-
-            var pigAct = prod.pig2EnCarteraTest();
-
-
-            var arcelor = sessio.Productes.Single(w => w.Id == 7);
-            var venda2019 = sessio.Moviments.Single(w => w.Id == 177);
-
-            var pig2019 = (venda2019.PreuParticipacio - venda2019._PreuCompraParticipacioOrigen) * venda2019.Participacions;
-
-            //var pigTr = venda2019.Prod.pig(DateTime.MinValue, venda2019.Data, true);
-            //var pigTr2 = venda2019.Prod.pig(DateTime.MinValue, venda2019.Data, false);
-
-            var pigTrw = 0;
-
-
-            Debug.WriteLine("\nFinal");
-        }
-
-
+        
         #endregion *** Test ***
 
     }
