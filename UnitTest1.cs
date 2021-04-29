@@ -470,45 +470,48 @@ namespace UnitTestInversions
             }
 
 
-            var compres = sessio.Moviments.Single(w => w.Id == 91).compresDeLaVendaTest(sessio).ToList();
+            var compres = sessio.Moviments.Single(w => w.Id == 91).compresDeLaVenda3Test().ToList();
 
             Assert.AreEqual(5, compres.Count(), "Número de files desgloç incorrecte");
 
-            foreach (var mdc in compres)
+            foreach (var compra in compres)
             {
-                if (mdc._DesglosCompra.MovCompraId == 26 && mdc._DesglosCompra.MovCompraOrigId == 17)
+                foreach (var desglosCompra in compra.DesglosCompres)
                 {
-                    //Id=24. MovId=26. MovOrigId=17. ParticipacionsDelMoviment=0.347200000000015. ParticipacionsDelMovimentOrigen=2.55975192993167
-                    Assert.AreEqual(0.3472, Math.Round(mdc._ParticipacionsDelMoviment, 4));
-                    Assert.AreEqual(2.5598, Math.Round(mdc._ParticipacionsDelMovimentOrigen, 4));
-                }
-                else if (mdc._DesglosCompra.MovCompra.Id == 31 && mdc._DesglosCompra.MovCompraOrig.Id == 15)
-                {
-                    //Id=41. MovId=31. MovOrigId=15. ParticipacionsDelMoviment=39.354. ParticipacionsDelMovimentOrigen=679.64
-                    Assert.AreEqual(39.354, Math.Round(mdc._ParticipacionsDelMoviment, 4));
-                    Assert.AreEqual(679.64, Math.Round(mdc._ParticipacionsDelMovimentOrigen, 4));
-                }
-                else if (mdc._DesglosCompra.MovCompra.Id == 31 && mdc._DesglosCompra.MovCompraOrig.Id == 16)
-                {
-                    //Id=42. MovId=31. MovOrigId=16. ParticipacionsDelMoviment=76.9523. ParticipacionsDelMovimentOrigen=547.6451
-                    Assert.AreEqual(76.9523, Math.Round(mdc._ParticipacionsDelMoviment, 4));
-                    Assert.AreEqual(547.6451, Math.Round(mdc._ParticipacionsDelMovimentOrigen, 4));
-                }
-                else if (mdc._DesglosCompra.MovCompra.Id == 31 && mdc._DesglosCompra.MovCompraOrig.Id == 17)
-                {
-                    //Id=43. MovId=31. MovOrigId=17. ParticipacionsDelMoviment=141.6462. ParticipacionsDelMovimentOrigen=1008.0512
-                    Assert.AreEqual(141.6462, Math.Round(mdc._ParticipacionsDelMoviment, 4));
-                    Assert.AreEqual(1008.0512, Math.Round(mdc._ParticipacionsDelMovimentOrigen, 4));
-                }
-                else if (mdc._DesglosCompra.MovCompra.Id == 31 && mdc._DesglosCompra.MovCompraOrig.Id == 27)
-                {
-                    //Id=44. MovId=31. MovOrigId=27. ParticipacionsDelMoviment=1.23029999999997. ParticipacionsDelMovimentOrigen=11.1955917196529
-                    Assert.AreEqual(1.2303, Math.Round(mdc._ParticipacionsDelMoviment, 4));
-                    Assert.AreEqual(11.1956, Math.Round(mdc._ParticipacionsDelMovimentOrigen, 4));
-                }
-                else
-                {
-                    throw new AssertFailedException(String.Format("Aquesta fila no correspon{0}. ", mdc.ToString()));
+                    if (desglosCompra.MovCompraId == 26 && desglosCompra.MovCompraOrigId == 17)
+                    {
+                        //Id=24. MovId=26. MovOrigId=17. ParticipacionsDelMoviment=0.347200000000015. ParticipacionsDelMovimentOrigen=2.55975192993167
+                        Assert.AreEqual(0.3472, Math.Round(desglosCompra.Participacions, 4));
+                        Assert.AreEqual(2.5598, Math.Round(desglosCompra.ParticipacionsOrig, 4));
+                    }
+                    else if (desglosCompra.MovCompra.Id == 31 && desglosCompra.MovCompraOrig.Id == 15)
+                    {
+                        //Id=41. MovId=31. MovOrigId=15. ParticipacionsDelMoviment=39.354. ParticipacionsDelMovimentOrigen=679.64
+                        Assert.AreEqual(39.354, Math.Round(desglosCompra.Participacions, 4));
+                        Assert.AreEqual(679.64, Math.Round(desglosCompra.ParticipacionsOrig, 4));
+                    }
+                    else if (desglosCompra.MovCompra.Id == 31 && desglosCompra.MovCompraOrig.Id == 16)
+                    {
+                        //Id=42. MovId=31. MovOrigId=16. ParticipacionsDelMoviment=76.9523. ParticipacionsDelMovimentOrigen=547.6451
+                        Assert.AreEqual(76.9523, Math.Round(desglosCompra.Participacions, 4));
+                        Assert.AreEqual(547.6451, Math.Round(desglosCompra.ParticipacionsOrig, 4));
+                    }
+                    else if (desglosCompra.MovCompra.Id == 31 && desglosCompra.MovCompraOrig.Id == 17)
+                    {
+                        //Id=43. MovId=31. MovOrigId=17. ParticipacionsDelMoviment=141.6462. ParticipacionsDelMovimentOrigen=1008.0512
+                        Assert.AreEqual(141.6462, Math.Round(desglosCompra.Participacions, 4));
+                        Assert.AreEqual(1008.0512, Math.Round(desglosCompra.ParticipacionsOrig, 4));
+                    }
+                    else if (desglosCompra.MovCompra.Id == 31 && desglosCompra.MovCompraOrig.Id == 27)
+                    {
+                        //Id=44. MovId=31. MovOrigId=27. ParticipacionsDelMoviment=1.23029999999997. ParticipacionsDelMovimentOrigen=11.1955917196529
+                        Assert.AreEqual(1.2303, Math.Round(desglosCompra.Participacions, 4));
+                        Assert.AreEqual(11.1956, Math.Round(desglosCompra.ParticipacionsOrig, 4));
+                    }
+                    else
+                    {
+                        throw new AssertFailedException(String.Format("Aquesta fila no correspon{0}-{1}. ", compra, desglosCompra));
+                    } 
                 }
             }
 
