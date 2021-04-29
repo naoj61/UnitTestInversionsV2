@@ -69,10 +69,10 @@ namespace UnitTestInversions
         /// <summary>
         /// Esborra la taula "DesglosCompres" i la crea de nou.
         /// </summary>
-        //[TestMethod]
+        [TestMethod]
         public void GeneraDesgloçCompres()
         {
-            //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
+            //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar la taula.
 
             var sessio = new InversionsBDContext();
 
@@ -95,7 +95,7 @@ namespace UnitTestInversions
                             Debug.WriteLine("co.Id = {0}", co.Id);
 
                             //if(co.Id == 101)
-                            co.desgloçarCompra(conn);
+                            co.desgloçarCompra(conn, co.MovimentRefVendaN);
                         }
                         //conn.SaveChanges();
                         dbContextTransaction.Commit();
@@ -110,9 +110,37 @@ namespace UnitTestInversions
 
 
         /// <summary>
-        /// Elimina camp PreuParticipacioOrigen de la taula Moviments
+        /// Esborra la taula "DesglosCompres" i la crea de nou.
         /// </summary>
         [TestMethod]
+        public void GeneraDesgloçCompresMovId26()
+        {
+            //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
+
+            using (var conn = new InversionsBDContext())
+            {
+                Debug.WriteLine("********** Inici **********");
+                // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
+                Usuari.Seleccionat = conn.Usuaris.Single(s => s.Id == (int)Usuari.Usuaris.Joan);
+
+                using (var dbContextTransaction = conn.Database.BeginTransaction())
+                {
+                    var filesDesglosCompres = conn.Database.ExecuteSqlCommand("DELETE from [DesglosCompres] where [MovCompraId] >= 92");
+
+                    var compra = conn.Moviments.Single(s => s.Id == 92);
+                    compra.desgloçarCompra(conn, compra.MovimentRefVendaN);
+
+                    dbContextTransaction.Commit();
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("\nFinal");
+        }
+
+        /// <summary>
+        /// Elimina camp PreuParticipacioOrigen de la taula Moviments
+        /// </summary>
+        //[TestMethod]
         public void ModificaEstruturaTaulaMoviments2()
         {
             try
@@ -127,68 +155,85 @@ namespace UnitTestInversions
         }
 
 
-
         /// <summary>
         /// Fa un traspàs de fons.
         /// </summary>
-        //[TestMethod]
+        [TestMethod]
         public void TraspasFons()
         {
             //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
 
-            // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
-            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+           //InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            const int idDel = 168;
-            var files = sessio.Database.ExecuteSqlCommand("DELETE from [DesglosCompres] where [MovCompraId] > " + idDel);
-            files = sessio.Database.ExecuteSqlCommand("DELETE from [Moviments] where[Id] > " + idDel);
+            const int idDel = 1208;
+
+            Producte prodVenda;
+            Producte prodCompra;
+            DateTime dataVenda = DateTime.Now;
+            double participacionsVenda;
+            double participacionsCompra;
+            double preuParticipacioVenda;
+            const string descripcio = null;
 
             using (var conn = new InversionsBDContext())
             {
                 using (var dbContextTransaction = conn.Database.BeginTransaction())
                 {
-                    System.Diagnostics.Debug.WriteLine("********** Inici **********");
+                    var filesDesglosCompres = conn.Database.ExecuteSqlCommand("DELETE from [DesglosCompres] where [MovCompraId] >= " + idDel);
+                    var filesMoviments = conn.Database.ExecuteSqlCommand("DELETE from [Moviments] where[Id] >= " + idDel);
+                    //dbContextTransaction.Commit();
 
-                    //var prodVenda = conn.ProdFons.Single(w => w.Id == 16);
-                    //var prodCompra = conn.ProdFons.Single(w => w.Id == 11);
-                    //var dataVenda = new DateTime(2017, 11, 6, 11, 30, 00); // 06/11/2017 11:30:00
-                    //const double participacionsVenda = 2500;
-                    //const double preuParticipacioVenda = 10.08;
-                    //const string descripcio = "";
-                    //const double participacionsCompra = 57.3069;
+                    Debug.WriteLine("********** Inici **********");
 
-                    var prodVenda = conn.ProdFons.Single(w => w.Id == 16);
-                    var prodCompra = conn.ProdFons.Single(w => w.Id == 11);
-                    var dataVenda = DateTime.Now;
+                    Usuari.Seleccionat = conn.Usuaris.Single(s => s.Id == (int)Usuari.Usuaris.Joan);
 
-                    const double participacionsVenda = 60;
-                    const double preuParticipacioVenda = 400;
-                    const string descripcio = null;
-                    const double participacionsCompra = 1000;
 
+                    // De Global a Optimal
+                    prodVenda = conn.ProdFons.Single(w => w.Id == 27);
+                    prodCompra = conn.ProdFons.Single(w => w.Id == 1);
+
+                    dataVenda = DateTime.Now;
+                    preuParticipacioVenda = 1800;
+                    participacionsVenda = prodVenda._Participacions;
+                    participacionsCompra = 15000;
                     prodVenda.desaTraspas(conn, dataVenda, participacionsVenda, preuParticipacioVenda, descripcio, dataVenda.AddSeconds(1)
                         , prodCompra, participacionsCompra);
 
-                    //prodVenda.desaCompra(conn, dataVenda, DateTime.Now.TimeOfDay, participacionsVenda, preuParticipacioVenda, 1, 0, descripcio
-                    //    , false, false);
+
+                    //// De Atkien a Global
+                    //prodVenda = conn.ProdFons.Single(w => w.Id == 16);
+                    //prodCompra = conn.ProdFons.Single(w => w.Id == 27);
+                    
+
+                    //dataVenda = DateTime.Now.AddDays(-1);
+                    //preuParticipacioVenda = 375.5500;
+                    //participacionsVenda = 80.7528;
+                    //participacionsCompra = 1778.6900;
+                    //prodVenda.desaTraspas(conn, dataVenda, participacionsVenda, preuParticipacioVenda, descripcio, dataVenda.AddSeconds(1)
+                    //    , prodCompra, participacionsCompra);
+
+
+                    //dataVenda = DateTime.Now;
+                    //preuParticipacioVenda = 380;
+                    //participacionsVenda = 80;
+                    //participacionsCompra = 1770;
+                    //prodVenda.desaTraspas(conn, dataVenda, participacionsVenda, preuParticipacioVenda, descripcio, dataVenda.AddSeconds(1)
+                    //    , prodCompra, participacionsCompra);
+
 
                     dbContextTransaction.Commit();
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine("\nFinal");
+            Debug.WriteLine("\nFinal");
         }
 
-        #endregion *** Modifiquen dades ***
 
-
-
-        #region *** Test ***
 
         /// <summary>
         /// 
         /// </summary>
-        [TestMethod]
+        //[TestMethod]
         public void ProvaTraspasMesCompra()
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
@@ -221,7 +266,85 @@ namespace UnitTestInversions
 
             Debug.WriteLine("\n*** Fi Ok ***");
         }
-        
+
+        #endregion *** Modifiquen dades ***
+
+
+        #region *** Test ***
+
+        /// <summary>
+        /// 27/04/2021
+        /// </summary>
+        [TestMethod]
+        public void pig2TotalTest()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            const int any = 2018;
+
+            Debug.WriteLine("\n");
+            var vendes = sessio.MovimentsUsuari.Where(w => w._EsVendaReal && w.Data.Year == any).ToList();
+            foreach (var venda in vendes)
+            {
+                Debug.WriteLine(String.Format("{0}\t{1}\t{2}\t{3}\t{4}", venda.Prod, venda.Id, venda.Data.ToShortDateString(), venda.Participacions, venda.PreuParticipacio));
+            }
+            Debug.WriteLine("\n");
+
+            double impVendes = vendes.Sum(venda => venda.ImportBrut);
+            double impCompres = vendes.Sum(venda => venda.calculaImportCompraOrigen3(true, true));
+            var pigs = impVendes - impCompres;
+
+            var pig = Producte.Pig2(Producte.TipusProducte.Tots, any, false);
+
+            Debug.WriteLine(String.Format("PiG trib:{0}", pig.ToString("#,##0.00")));
+
+            Debug.WriteLine("\n*** Fi Ok ***");
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [TestMethod]
+        public void PiGNou()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            double pigTotalEnCartera = 0;
+            foreach (var prod in sessio.Productes)
+            {
+                var valorAct = prod._ValorActualEnCartera;
+
+                Moviment venda = new Moviment();
+                venda.Prod = prod;
+                venda.Data = DateTime.Now;
+                venda.TipusMoviment = TipusMoviment.Venda;
+                venda.Participacions = prod._Participacions;
+
+                var costOrig = venda.calculaImportCompraOrigen3(true, true);
+
+                var piG = valorAct - costOrig;
+
+                pigTotalEnCartera += piG;
+            }
+
+            Debug.WriteLine("\nPiG total en cartera:{0}", pigTotalEnCartera);
+
+            double pigTotalVenut = 0;
+            foreach (var venda in sessio.MovimentsUsuari.Where(w => w._EsVendaReal))
+            {
+                var costOrig = venda.calculaImportCompraOrigen3(true, true);
+
+                var piG = venda.ImportBrut - costOrig;
+
+                pigTotalVenut += piG;
+            }
+
+            Debug.WriteLine("PiG total venut:{0}", pigTotalVenut);
+
+            Debug.WriteLine("PiG total:{0}", pigTotalEnCartera + pigTotalVenut);
+
+            Debug.WriteLine("\n*** Fi Ok ***");
+        }
 
         /// <summary>
         /// 
@@ -394,122 +517,6 @@ namespace UnitTestInversions
 
 
         /// <summary>
-        /// No poden haver data hora minut segon duplicats.
-        /// </summary>
-        [TestMethod]
-        public void ComprovaDatesMovDuplicades()
-        {
-            try
-            {
-                InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
-
-                bool totOk = true;
-
-                System.Diagnostics.Debug.WriteLine("********** Inici Comprovació dates **********");
-                DateTime dataAnt = DateTime.MinValue;
-                foreach (var mov in sessio.Moviments.OrderBy(o => o.Data).ToList())
-                {
-                    if (dataAnt == mov.Data)
-                    {
-                        System.Diagnostics.Debug.WriteLine("Data duplicada. {0}. IdMov.{1}", dataAnt, mov.Id);
-                        totOk = false;
-                    }
-                    dataAnt = mov.Data;
-                }
-                System.Diagnostics.Debug.WriteLine("********** Final Comprovació dates **********");
-
-                Assert.IsTrue(totOk, "Hi ha dates duplicades");
-            }
-            catch (AssertFailedException)
-            {
-                // Si no capturo l'error aquí, passaria pel "catch (Exception ex)" i el test acabaria bé.
-                throw;
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-        }
-
-
-        /// <summary>
-        /// Comprova el càlcul del preu origen en els traspassos de fons.
-        /// </summary>
-        [TestMethod]
-        public void ComprovaCalculPreuOrigen()
-        {
-            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
-
-            var thailand = sessio.ProdFons.Single(w => w.Id == 13);
-
-            var pig = thailand.pig2TotalTest(inclouCartera:false);
-            var pig2013 = thailand.pig2TotalTest(2013);
-
-            double preuOrig;
-            var mov = sessio.Moviments.Single(s => s.Id == 25);
-            if (mov.TipusMoviment == TipusMoviment.Compra)
-            {
-                var venda = mov.MovimentRefVendaN;
-                preuOrig = venda.Participacions * venda._PreuParticipacioOrigen.GetValueOrDefault() / mov.Participacions;
-                Assert.AreEqual(mov._PreuCompraParticipacioOrigen, preuOrig, 0.001, "Preu origen no coincideix");
-            }
-            else
-            {
-                var venda = mov;
-
-                var compresVenda = venda.compresAnteriors();
-                preuOrig = compresVenda.Sum(movimentCompra => movimentCompra._ParticipacionsDisponibles * movimentCompra._PreuParticipacioOrigenTest);
-                preuOrig = preuOrig / venda.Participacions;
-                Assert.AreEqual(venda._PreuCompraParticipacioOrigen, preuOrig, 0.001, "Preu origen no coincideix");
-            }
-
-            //venda = sessio.Moviments.Single(s => s.Id == 25);
-            //venda = sessio.Moviments.Single(s => s.Id == 28);
-            //venda = sessio.Moviments.Single(s => s.Id == 30);
-
-            System.Diagnostics.Debug.WriteLine("\nFinal");
-        }
-
-
-        /// <summary>
-        /// Compara els preu originals amb el sistema nou i amb l'antic  a nivell de moviment compra.
-        /// </summary>
-        [TestMethod]
-        public void TestPreuOriginal()
-        {
-            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
-
-            System.Diagnostics.Debug.WriteLine("********** Inici **********");
-
-            int oks = 0, kos = 0;
-
-            foreach (var compra in sessio.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
-            {
-                var costTotalOrig = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig * s._PreuPartOrig);
-                var preuUnitOrig = Math.Round(costTotalOrig / compra.Participacions, 4);
-                var preuOrigAnt = Math.Round(compra._PreuCompraParticipacioOrigen, 4);
-                var dif = Math.Round(preuUnitOrig - preuOrigAnt, 2);
-
-                if (dif > 0)
-                {
-                    Debug.WriteLine("MovId = {0}\tDif = {3}\tpreuUnitOrig = {1}\tpreuOrigAnt = {2}"
-                        , compra.Id, preuUnitOrig.ToString("#,##0.00€"), preuOrigAnt.ToString("#,##0.00€"), dif.ToString("#,##0.00€"));
-                    kos++;
-                }
-                else
-                {
-                    oks++;
-                }
-            }
-
-            System.Diagnostics.Debug.WriteLine("\nOks={0}. Kos={1}", oks, kos);
-
-            Assert.IsTrue(kos == 0, "\nHi ha compres que no quadren");
-            System.Diagnostics.Debug.WriteLine("Final");
-        }
-
-
-        /// <summary>
         /// Comprova que el desgloç d'unes compres determinades son els esperats.
         /// </summary>
         [TestMethod]
@@ -541,6 +548,15 @@ namespace UnitTestInversions
 
         #region *** Mètodes ***
 
+        internal static InversionsBDContext ConnectaBd()
+        {
+            InversionsBDContext sessio = new InversionsBDContext();
+            sessio.Configuration.AutoDetectChangesEnabled = false; // Si poso true, dona error quan inserto una fila i l'esborro en la mateixa sessió.
+            sessio.Configuration.LazyLoadingEnabled = true;
+
+            return sessio;
+        }
+
         /// <summary>
         /// Connecta la BD.
         /// </summary>
@@ -548,11 +564,16 @@ namespace UnitTestInversions
         /// <returns></returns>
         internal static InversionsBDContext ConnectaBd(Usuari.Usuaris usuari)
         {
-            InversionsBDContext sessio = new InversionsBDContext();
-            sessio.Configuration.AutoDetectChangesEnabled = false; // Si poso true, dona error quan inserto una fila i l'esborro en la mateixa sessió.
-            sessio.Configuration.LazyLoadingEnabled = true;
-
+            InversionsBDContext sessio = ConnectaBd();
             Usuari.Seleccionat = sessio.Usuaris.Single(s => s.Id == (int)usuari);
+
+            return sessio;
+        }
+
+        internal static InversionsBDContext ConnectaBd(Usuari usuari)
+        {
+            InversionsBDContext sessio = ConnectaBd();
+            Usuari.Seleccionat = usuari;
 
             return sessio;
         }
