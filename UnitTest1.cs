@@ -39,7 +39,7 @@ namespace UnitTestInversions
         }
 
         /// <summary>
-        /// En els trapassos, informa RefTraspas(MovimentRefTraspasId) de les vendes.
+        /// En els trapassos, informa RefTraspasId(MovimentRefTraspasId) de les vendes.
         /// </summary>
         //[TestMethod]
         public void CreaMovimentRefVendaIdEnVendesTraspassades()
@@ -51,10 +51,10 @@ namespace UnitTestInversions
                 {
                     System.Diagnostics.Debug.WriteLine("********** Inici **********");
 
-                    foreach (var movCompraTraspas in conn.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra && w.RefTraspas != null))
+                    foreach (var movCompraTraspas in conn.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra && w.RefTraspasId != null))
                     {
-                        var movVendaTraspas = conn.Moviments.Single(w => w.Id == movCompraTraspas.RefTraspas);
-                        movVendaTraspas.RefTraspas = movCompraTraspas.Id;
+                        var movVendaTraspas = conn.Moviments.Single(w => w.Id == movCompraTraspas.RefTraspasId);
+                        movVendaTraspas.RefTraspasId = movCompraTraspas.Id;
                         conn.SaveChanges();
                         cont++;
                     }
@@ -95,7 +95,7 @@ namespace UnitTestInversions
                             Debug.WriteLine("co.Id = {0}", co.Id);
 
                             //if(co.Id == 101)
-                            co.desgloçarCompra(conn, co.RefTraspasN);
+                            co.desgloçarCompra(conn, co.RefTraspas);
                         }
                         //conn.SaveChanges();
                         dbContextTransaction.Commit();
@@ -128,7 +128,7 @@ namespace UnitTestInversions
                     var filesDesglosCompres = conn.Database.ExecuteSqlCommand("DELETE from [DesglosCompres] where [MovCompraId] >= 92");
 
                     var compra = conn.Moviments.Single(s => s.Id == 92);
-                    compra.desgloçarCompra(conn, compra.RefTraspasN);
+                    compra.desgloçarCompra(conn, compra.RefTraspas);
 
                     dbContextTransaction.Commit();
                 }
@@ -140,14 +140,14 @@ namespace UnitTestInversions
         /// <summary>
         /// Elimina camp PreuParticipacioOrigen de la taula Moviments
         /// </summary>
-        //[TestMethod]
+        [TestMethod]
         public void ModificaEstruturaTaulaMoviments2()
         {
             try
             {
                 var sessio = new InversionsBDContext();
                 sessio.Database.ExecuteSqlCommand("ALTER TABLE [Moviments] DROP COLUMN [PreuParticipacioOrigen]");
-                sessio.Database.ExecuteSqlCommand("EXEC sp_RENAME 'Moviments.MovimentRefVendaId' , 'RefTraspas', 'COLUMN'");
+                sessio.Database.ExecuteSqlCommand("EXEC sp_RENAME 'Moviments.MovimentRefVendaId' , 'RefTraspasId', 'COLUMN'");
             }
             catch (Exception ex)
             {
@@ -551,7 +551,7 @@ namespace UnitTestInversions
             
 
             var compraT = sessio.Moviments.Single(w => w.Id == 41);
-            var vendaT = sessio.Moviments.Single(w => w.Id == compraT.RefTraspas);
+            var vendaT = sessio.Moviments.Single(w => w.Id == compraT.RefTraspasId);
             var compra = sessio.Moviments.Single(w => w.Id == 1);
             var venda = sessio.Moviments.Single(w => w.Id == 4);
 
@@ -560,10 +560,10 @@ namespace UnitTestInversions
             var t2 = compra.RefTraspas1.Any();
             var t3 = venda.RefTraspas1.Any();
 
-            var x0 = compraT.RefTraspasN;
-            var x1 = vendaT.RefTraspasN;
-            var x2 = compra.RefTraspasN;
-            var x3 = venda.RefTraspasN;
+            var x0 = compraT.RefTraspas;
+            var x1 = vendaT.RefTraspas;
+            var x2 = compra.RefTraspas;
+            var x3 = venda.RefTraspas;
 
             System.Diagnostics.Debug.WriteLine("*** Fi Ok ***");
         }
