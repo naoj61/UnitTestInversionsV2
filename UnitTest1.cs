@@ -39,7 +39,7 @@ namespace UnitTestInversions
         }
 
         /// <summary>
-        /// En els trapassos, informa MovimentRefVendaId(MovimentRefTraspasId) de les vendes.
+        /// En els trapassos, informa RefTraspas(MovimentRefTraspasId) de les vendes.
         /// </summary>
         //[TestMethod]
         public void CreaMovimentRefVendaIdEnVendesTraspassades()
@@ -51,10 +51,10 @@ namespace UnitTestInversions
                 {
                     System.Diagnostics.Debug.WriteLine("********** Inici **********");
 
-                    foreach (var movCompraTraspas in conn.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra && w.MovimentRefVendaId != null))
+                    foreach (var movCompraTraspas in conn.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra && w.RefTraspas != null))
                     {
-                        var movVendaTraspas = conn.Moviments.Single(w => w.Id == movCompraTraspas.MovimentRefVendaId);
-                        movVendaTraspas.MovimentRefVendaId = movCompraTraspas.Id;
+                        var movVendaTraspas = conn.Moviments.Single(w => w.Id == movCompraTraspas.RefTraspas);
+                        movVendaTraspas.RefTraspas = movCompraTraspas.Id;
                         conn.SaveChanges();
                         cont++;
                     }
@@ -95,7 +95,7 @@ namespace UnitTestInversions
                             Debug.WriteLine("co.Id = {0}", co.Id);
 
                             //if(co.Id == 101)
-                            co.desgloçarCompra(conn, co.MovimentRefVendaN);
+                            co.desgloçarCompra(conn, co.RefTraspasN);
                         }
                         //conn.SaveChanges();
                         dbContextTransaction.Commit();
@@ -128,7 +128,7 @@ namespace UnitTestInversions
                     var filesDesglosCompres = conn.Database.ExecuteSqlCommand("DELETE from [DesglosCompres] where [MovCompraId] >= 92");
 
                     var compra = conn.Moviments.Single(s => s.Id == 92);
-                    compra.desgloçarCompra(conn, compra.MovimentRefVendaN);
+                    compra.desgloçarCompra(conn, compra.RefTraspasN);
 
                     dbContextTransaction.Commit();
                 }
@@ -147,6 +147,7 @@ namespace UnitTestInversions
             {
                 var sessio = new InversionsBDContext();
                 sessio.Database.ExecuteSqlCommand("ALTER TABLE [Moviments] DROP COLUMN [PreuParticipacioOrigen]");
+                sessio.Database.ExecuteSqlCommand("EXEC sp_RENAME 'Moviments.MovimentRefVendaId' , 'RefTraspas', 'COLUMN'");
             }
             catch (Exception ex)
             {
@@ -158,7 +159,7 @@ namespace UnitTestInversions
         /// <summary>
         /// Fa un traspàs de fons.
         /// </summary>
-        [TestMethod]
+        //[TestMethod]
         public void TraspasFons()
         {
             //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
@@ -270,7 +271,28 @@ namespace UnitTestInversions
         #endregion *** Modifiquen dades ***
 
 
+
         #region *** Test ***
+
+        /// <summary>
+        /// 27/04/2021
+        /// </summary>
+        [TestMethod]
+        public void comprovaVendesDeLaCompra()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            var compres = sessio.MovimentsUsuari.Where(w => w._EsCompra);
+
+            foreach (var compra in compres)
+            {
+                double partsNoVenudes;
+                var vendesCompra = compra.vendesDeLaCompraTest(out partsNoVenudes);
+            }
+
+            Debug.WriteLine("\n*** Fi Ok ***");
+        }
+
 
         /// <summary>
         /// 27/04/2021
@@ -529,19 +551,19 @@ namespace UnitTestInversions
             
 
             var compraT = sessio.Moviments.Single(w => w.Id == 41);
-            var vendaT = sessio.Moviments.Single(w => w.Id == compraT.MovimentRefVendaId);
+            var vendaT = sessio.Moviments.Single(w => w.Id == compraT.RefTraspas);
             var compra = sessio.Moviments.Single(w => w.Id == 1);
             var venda = sessio.Moviments.Single(w => w.Id == 4);
 
-            var t0 = compraT.MovimentRefVenda1.Any();
-            var t1 = vendaT.MovimentRefVenda1.Any();
-            var t2 = compra.MovimentRefVenda1.Any();
-            var t3 = venda.MovimentRefVenda1.Any();
+            var t0 = compraT.RefTraspas1.Any();
+            var t1 = vendaT.RefTraspas1.Any();
+            var t2 = compra.RefTraspas1.Any();
+            var t3 = venda.RefTraspas1.Any();
 
-            var x0 = compraT.MovimentRefVendaN;
-            var x1 = vendaT.MovimentRefVendaN;
-            var x2 = compra.MovimentRefVendaN;
-            var x3 = venda.MovimentRefVendaN;
+            var x0 = compraT.RefTraspasN;
+            var x1 = vendaT.RefTraspasN;
+            var x2 = compra.RefTraspasN;
+            var x3 = venda.RefTraspasN;
 
             System.Diagnostics.Debug.WriteLine("*** Fi Ok ***");
         }

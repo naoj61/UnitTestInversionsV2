@@ -21,8 +21,127 @@ namespace UnitTestInversions
     {
         #region *** Test ***
 
+
+
+
         /// <summary>
-        /// .
+        /// Suma de compres reals ha de ser igual a la suma de les vendes reals mes les participacions en cartera.
+        /// </summary>
+        [TestMethod]
+        public void ComprovaPartsOrig()
+        {
+           
+            // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
+            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
+
+            var totalPartsCompresReals = sessio.MovimentsUsuari.Where(w => w._EsCompraReal).Sum(s => s.Participacions);
+            var totalPartsVendesReals = sessio.MovimentsUsuari.Where(w => w._EsVendaReal).Sum(s => s.Participacions);
+            double totalPartsEnCartera = 0;
+
+            foreach (var producte in sessio.Productes)
+            {
+                if(producte._Participacions == 0)
+                    continue;
+                
+                var compresAnt = producte.compresAnteriors3Test(DateTime.Now, producte._Participacions);
+
+                foreach (var compra in compresAnt)
+                {
+                    foreach (var desglosCompra in compra.DesglosCompres)
+                    {
+                        totalPartsEnCartera += desglosCompra._ParticipacionsDisponiblesOrig;
+                    }
+                }
+            }
+
+            var total = totalPartsCompresReals - totalPartsVendesReals - totalPartsEnCartera;
+
+            Debug.WriteLine(String.Format("Total parts compres reals:\t{0}", totalPartsCompresReals.ToString("####.000", CultureInfo.CurrentCulture)));
+            Debug.WriteLine(String.Format("Total parts vendes reals:\t{0}", totalPartsVendesReals.ToString("####.000", CultureInfo.CurrentCulture)));
+            Debug.WriteLine(String.Format("Total parts en cartera:\t{0}", totalPartsEnCartera.ToString("####.000", CultureInfo.CurrentCulture)));
+            Debug.WriteLine(String.Format("Total parts:\t{0}", total.ToString("####.000", CultureInfo.CurrentCulture)));
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [TestMethod]
+        public void ComparaPreuCompraOrigAmbSelfBank()
+        {
+            /*
+              							Import compra orig
+                 5-DWS Deutschland LC			  777.35 €
+                 6-Candriam Eqs L Biotech		 6132.72 €
+                16-DWS Aktien Strategie			17922.04 €
+                19-Trea NB Capital Plus		 	 1588.63 €
+                27-Fidelity Global Technology	27338.26 €
+                 7-Arcelor Mittal Steel         26084,35 €
+                Total                           79843,35 €
+             */
+
+            // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
+            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
+
+            Producte prod;
+            double costOrigEnCart;
+            double importSelf;
+            double total = 0;
+
+            Debug.WriteLine("\nProd:\tSelf:\tAquí:\tDif:");
+
+            importSelf = 777.35;
+            prod = sessio.Productes.Single(s => s.Id == 5);
+            costOrigEnCart = prod.costOriginalEnCartera2Test();
+            total += costOrigEnCart;
+            //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
+            Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000",CultureInfo.CurrentCulture), prod);
+
+            importSelf = 6132.72;
+            prod = sessio.Productes.Single(s => s.Id == 6);
+            costOrigEnCart = prod.costOriginalEnCartera2Test();
+            total += costOrigEnCart;
+            //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
+            Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
+
+            importSelf = 17922.04;
+            prod = sessio.Productes.Single(s => s.Id == 16);
+            costOrigEnCart = prod.costOriginalEnCartera2Test();
+            total += costOrigEnCart;
+            //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
+            Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
+
+            importSelf = 1588.63;
+            prod = sessio.Productes.Single(s => s.Id == 19);
+            costOrigEnCart = prod.costOriginalEnCartera2Test();
+            total += costOrigEnCart;
+            //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
+            Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
+
+            importSelf = 27338.26;
+            prod = sessio.Productes.Single(s => s.Id == 27);
+            costOrigEnCart = prod.costOriginalEnCartera2Test();
+            total += costOrigEnCart;
+            //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
+            Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
+
+            importSelf = 26084.35;
+            prod = sessio.Productes.Single(s => s.Id == 7);
+            costOrigEnCart = prod.costOriginalEnCartera2Test();
+            total += costOrigEnCart;
+            //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
+            Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
+
+            importSelf = 79843.35;
+            //Assert.AreEqual(importSelf, total, .0001);
+            Debug.WriteLine("Total\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), total.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - total).ToString("####.000", CultureInfo.CurrentCulture));
+
+            Debug.WriteLine("\nFinal");
+        }
+
+
+        /// <summary>
+        /// 
         /// </summary>
         [TestMethod]
         public void ComparaCompresDesgloçCompres()
@@ -232,7 +351,7 @@ namespace UnitTestInversions
         {
             InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
 
-            System.Diagnostics.Debug.WriteLine("********** Inici **********");
+            Debug.WriteLine("********** Inici **********");
 
             int oks = 0, kos = 0;
 
@@ -255,10 +374,10 @@ namespace UnitTestInversions
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine("\nOks={0}. Kos={1}", oks, kos);
+            Debug.WriteLine("\nOks={0}. Kos={1}", oks, kos);
 
             Assert.IsTrue(kos == 0, "\nHi ha compres que no quadren");
-            System.Diagnostics.Debug.WriteLine("Final");
+            Debug.WriteLine("Final");
         }
 
         #endregion *** Test ***
