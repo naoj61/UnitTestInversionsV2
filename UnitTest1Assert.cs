@@ -21,6 +21,73 @@ namespace UnitTestInversions
     {
         #region *** Test ***
 
+        /// <summary>
+        /// Valida que 
+        /// Si son accions les participacions a Moviments siguin les mateixes que les de DesglosCompres.
+        /// Si son fons, que les percipipacions orig en cartera corresponguin ales compres originals
+        /// </summary>
+        [TestMethod]
+        public void comprovaVendesDeLaCompra()
+        {
+            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
+
+            // *** Valida accions ***
+            Debug.WriteLine("\nAccions");
+            Debug.WriteLine("Prod\tParts Mov\tParts Desg\tDif");
+            var prodsAccionsAmbPartsEncartera = sessio.ProdAccions.ToList().Where(w => w._Participacions > 0);
+            foreach (var prod in prodsAccionsAmbPartsEncartera)
+            {
+                var partsMov = prod.MovimentsProducteUsuari.Where(w => w._EsCompra).Sum(s => s.Participacions);
+                var partsDesg = prod.MovimentsProducteUsuari.Sum(s => s.DesglosCompres.Sum(s2 => s2.ParticipacionsOrig));
+                var dif = Math.Round(partsMov - partsDesg, 3);
+
+                Debug.WriteLine("{0}\t{1}\t{2}\t{3}", prod
+                    , partsMov.ToString(CultureInfo.CurrentCulture)
+                    , partsDesg.ToString(CultureInfo.CurrentCulture)
+                    , dif.ToString(CultureInfo.CurrentCulture));
+
+                Assert.AreEqual(partsMov, partsDesg, 0, "\nProd: {0}.", prod);
+            }
+
+            
+
+            // *** Valida fons ***
+            Dictionary<Moviment, double> compresOrigAmbPartsEnCartera = new Dictionary<Moviment, double>();
+            var prodsFonsAmbPartsEncartera = sessio.ProdFons.ToList().Where(w => w._Participacions > 0);
+            foreach (var prod in prodsFonsAmbPartsEncartera)
+            {
+                foreach (var compra in prod.compresAnteriors3Test(DateTime.Now, prod._Participacions))
+                {
+                    foreach (var desglosCompra in compra.DesglosCompres)
+                    {
+                        if (!compresOrigAmbPartsEnCartera.ContainsKey(desglosCompra.MovCompraOrig))
+                            compresOrigAmbPartsEnCartera[desglosCompra.MovCompraOrig] = desglosCompra._ParticipacionsDisponiblesOrig;
+                        else
+                            compresOrigAmbPartsEnCartera[desglosCompra.MovCompraOrig] += desglosCompra._ParticipacionsDisponiblesOrig;
+                    }
+                }
+            }
+
+            Debug.WriteLine("\nFons");
+            Debug.WriteLine("Prod\tId Orig\tParts Orig\tAcumulat Traspas\tDif");
+            foreach (var d in compresOrigAmbPartsEnCartera.OrderBy(o => o.Key.Id))
+            {
+                var compra = d.Key;
+
+                var partsOrig = Math.Round(compra.Participacions, 3);
+                var parts = Math.Round(d.Value, 3);
+                var dif = Math.Round(partsOrig - parts, 3);
+
+                Debug.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", d.Key.Prod, compra.Id
+                    , partsOrig.ToString(CultureInfo.CurrentCulture)
+                    , parts.ToString(CultureInfo.CurrentCulture)
+                    , dif.ToString(CultureInfo.CurrentCulture));
+
+                Assert.AreEqual(partsOrig, parts, 3, "\nProd: {0}. Id Mov: {1}.", d.Key.Prod, compra.Id);
+            }
+
+            Debug.WriteLine("\n*** Fi Ok ***");
+        }
 
 
 

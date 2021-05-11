@@ -26,8 +26,6 @@ namespace UnitTestInversions
         //[TestMethod]
         public void ModificaEstruturaTaulaMoviments()
         {
-            return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
-
             var sessio = new InversionsBDContext();
 
             sessio.Database.ExecuteSqlCommand("EXEC sp_RENAME 'DesglosCompres.RefCompraId' , 'MovCompraId', 'COLUMN'");
@@ -110,9 +108,38 @@ namespace UnitTestInversions
 
 
         /// <summary>
-        /// Esborra la taula "DesglosCompres" i la crea de nou.
+        /// Elimina camp PreuParticipacioOrigen de la taula Moviments
         /// </summary>
         [TestMethod]
+        public void ModificaEstruturaTaulaMoviments2()
+        {
+            var sessio = new InversionsBDContext();
+            try
+            {
+                sessio.Database.ExecuteSqlCommand("ALTER TABLE [Moviments] DROP COLUMN [PreuParticipacioOrigen]");
+                Debug.WriteLine("Alter Table Fet!!!");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(String.Format("Alter Table Error: {0}", ex.Message));
+            }
+            try
+            {
+                sessio.Database.ExecuteSqlCommand("EXEC sp_RENAME 'Moviments.MovimentRefVendaId' , 'RefTraspasId', 'COLUMN'");
+                Debug.WriteLine("Rename Table Fet!!!");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(String.Format("Rename Error: {0}", ex.Message));
+            }
+        }
+
+
+        /// <summary>
+        /// Esborra la taula "DesglosCompres" i la crea de nou.
+        /// </summary>
+        [
+            TestMethod]
         public void GeneraDesgloçCompresMovId26()
         {
             //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
@@ -121,7 +148,7 @@ namespace UnitTestInversions
             {
                 Debug.WriteLine("********** Inici **********");
                 // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
-                Usuari.Seleccionat = conn.Usuaris.Single(s => s.Id == (int)Usuari.Usuaris.Joan);
+                Usuari.Seleccionat = conn.Usuaris.Single(s => s.Id == (int) Usuari.Usuaris.Joan);
 
                 using (var dbContextTransaction = conn.Database.BeginTransaction())
                 {
@@ -135,24 +162,6 @@ namespace UnitTestInversions
             }
 
             System.Diagnostics.Debug.WriteLine("\nFinal");
-        }
-
-        /// <summary>
-        /// Elimina camp PreuParticipacioOrigen de la taula Moviments
-        /// </summary>
-        [TestMethod]
-        public void ModificaEstruturaTaulaMoviments2()
-        {
-            try
-            {
-                var sessio = new InversionsBDContext();
-                sessio.Database.ExecuteSqlCommand("ALTER TABLE [Moviments] DROP COLUMN [PreuParticipacioOrigen]");
-                sessio.Database.ExecuteSqlCommand("EXEC sp_RENAME 'Moviments.MovimentRefVendaId' , 'RefTraspasId', 'COLUMN'");
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
         }
 
 
@@ -271,24 +280,49 @@ namespace UnitTestInversions
         #endregion *** Modifiquen dades ***
 
 
-
         #region *** Test ***
 
         /// <summary>
         /// 27/04/2021
         /// </summary>
         [TestMethod]
-        public void comprovaVendesDeLaCompra()
+        public void xxx()
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            var compres = sessio.MovimentsUsuari.Where(w => w._EsCompra);
+            double importTot = 0;
+            double partsTot = 0;
 
-            foreach (var compra in compres)
+            Debug.WriteLine("\nProd\tId\tParts\tImport");
+            foreach (var prodFons in sessio.ProdFons)
             {
-                double partsNoVenudes;
-                var vendesCompra = compra.vendesDeLaCompraTest(out partsNoVenudes);
+                if (prodFons.Id != 3)
+                    continue;
+
+                prodFons.resetParticipacionsDisponibles();
+
+                var compres = prodFons.MovimentsProducteUsuari.Where(w => w._EsCompraReal).ToList();
+                
+                foreach (var compra in compres)
+                {
+                    try
+                    {
+                        var parts = compra.partsEnCarteraCompra();
+                        var import = parts * compra.PreuParticipacio;
+                        if (!Utilitats.EsZero(import))
+                        {
+                            importTot += import;
+                            partsTot += parts;
+                            Debug.WriteLine("{0}-{1}\t{2}\t{3}\t{4}", prodFons.Id, prodFons, compra.Id, parts.ToString(CultureInfo.CurrentCulture), import.ToString(CultureInfo.CurrentCulture)); 
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+
             }
+            Debug.WriteLine("\nParts: {0}. Import total: {1}", partsTot.ToString(CultureInfo.CurrentCulture), importTot.ToString(CultureInfo.CurrentCulture));
 
             Debug.WriteLine("\n*** Fi Ok ***");
         }
