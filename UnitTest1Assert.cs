@@ -24,7 +24,7 @@ namespace UnitTestInversions
         /// <summary>
         /// Valida que 
         /// Si son accions les participacions a Moviments siguin les mateixes que les de DesglosCompres.
-        /// Si son fons, que les percipipacions orig en cartera corresponguin ales compres originals
+        /// Si son fons, que les partipipacions orig en cartera més les vendes reals corresponguin a les compres originals
         /// </summary>
         [TestMethod]
         public void comprovaVendesDeLaCompra()
@@ -32,58 +32,83 @@ namespace UnitTestInversions
             InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
 
             // *** Valida accions ***
+
             Debug.WriteLine("\nAccions");
             Debug.WriteLine("Prod\tParts Mov\tParts Desg\tDif");
+
+            // Compto les participacions de les compres reals de totes les accions.
             var prodsAccionsAmbPartsEncartera = sessio.ProdAccions.ToList().Where(w => w._Participacions > 0);
             foreach (var prod in prodsAccionsAmbPartsEncartera)
             {
                 var partsMov = prod.MovimentsProducteUsuari.Where(w => w._EsCompra).Sum(s => s.Participacions);
-                var partsDesg = prod.MovimentsProducteUsuari.Sum(s => s.DesglosCompres.Sum(s2 => s2.ParticipacionsOrig));
+                var partsDesg = prod.MovimentsProducteUsuari.Sum(s => s.DesglosCompres.Sum(s2 => s2.Participacions));
                 var dif = Math.Round(partsMov - partsDesg, 3);
 
-                Debug.WriteLine("{0}\t{1}\t{2}\t{3}", prod
-                    , partsMov.ToString(CultureInfo.CurrentCulture)
-                    , partsDesg.ToString(CultureInfo.CurrentCulture)
-                    , dif.ToString(CultureInfo.CurrentCulture));
+                if (!Utilitats.EsZero(dif))
+                    Debug.WriteLine("{0}\t{1}\t{2}\t{3}", prod
+                        , partsMov.ToString(CultureInfo.CurrentCulture)
+                        , partsDesg.ToString(CultureInfo.CurrentCulture)
+                        , dif.ToString(CultureInfo.CurrentCulture));
 
                 Assert.AreEqual(partsMov, partsDesg, 0, "\nProd: {0}.", prod);
             }
 
-            
 
             // *** Valida fons ***
+
             Dictionary<Moviment, double> compresOrigAmbPartsEnCartera = new Dictionary<Moviment, double>();
-            var prodsFonsAmbPartsEncartera = sessio.ProdFons.ToList().Where(w => w._Participacions > 0);
-            foreach (var prod in prodsFonsAmbPartsEncartera)
+
+            // Compto les participacions de vemde reals del tots els fons.
+            var vendesReals = sessio.MovimentsUsuari.Where(w => w.Prod is ProdFons && w._EsVendaReal).ToList();
+            foreach (var venda in vendesReals)
             {
-                foreach (var compra in prod.compresAnteriors3Test(DateTime.Now, prod._Participacions))
+                var compresDeLaVenda = venda.compresDeLaVenda4Test();
+                foreach (var compra in compresDeLaVenda)
                 {
                     foreach (var desglosCompra in compra.DesglosCompres)
                     {
-                        if (!compresOrigAmbPartsEnCartera.ContainsKey(desglosCompra.MovCompraOrig))
-                            compresOrigAmbPartsEnCartera[desglosCompra.MovCompraOrig] = desglosCompra._ParticipacionsDisponiblesOrig;
+                        if (compresOrigAmbPartsEnCartera.ContainsKey(desglosCompra.MovCompraOrig))
+                            compresOrigAmbPartsEnCartera[desglosCompra.MovCompraOrig] += desglosCompra._ParticipacionsUtilitzadesOrig;
                         else
-                            compresOrigAmbPartsEnCartera[desglosCompra.MovCompraOrig] += desglosCompra._ParticipacionsDisponiblesOrig;
+                            compresOrigAmbPartsEnCartera[desglosCompra.MovCompraOrig] = desglosCompra._ParticipacionsUtilitzadesOrig;
+                    }
+                }
+            }
+
+            // Compto les participacions de les compres reals de tots els fons.
+            var prodsFonsAmbPartsEncartera = sessio.ProdFons.ToList().Where(w => w._Participacions > 0);
+            foreach (var prod in prodsFonsAmbPartsEncartera)
+            {
+                var compresDeLaVenda = prod.compresDeLaVenda4Test(DateTime.Now, prod._Participacions);
+                foreach (var compra in compresDeLaVenda)
+                {
+                    foreach (var desglosCompra in compra.DesglosCompres)
+                    {
+                        if (compresOrigAmbPartsEnCartera.ContainsKey(desglosCompra.MovCompraOrig))
+                            compresOrigAmbPartsEnCartera[desglosCompra.MovCompraOrig] += desglosCompra._ParticipacionsUtilitzadesOrig;
+                        else
+                            compresOrigAmbPartsEnCartera[desglosCompra.MovCompraOrig] = desglosCompra._ParticipacionsUtilitzadesOrig;
                     }
                 }
             }
 
             Debug.WriteLine("\nFons");
             Debug.WriteLine("Prod\tId Orig\tParts Orig\tAcumulat Traspas\tDif");
-            foreach (var d in compresOrigAmbPartsEnCartera.OrderBy(o => o.Key.Id))
+            foreach (var compraOrig in compresOrigAmbPartsEnCartera.OrderBy(o => o.Key.Id))
             {
-                var compra = d.Key;
+                var compra = compraOrig.Key;
 
-                var partsOrig = Math.Round(compra.Participacions, 3);
-                var parts = Math.Round(d.Value, 3);
-                var dif = Math.Round(partsOrig - parts, 3);
+                var partsOrig = Math.Round(compra.Participacions, 4);
+                var parts = Math.Round(compraOrig.Value, 4);
+                var dif = Math.Round(partsOrig - parts, 4);
 
-                Debug.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", d.Key.Prod, compra.Id
-                    , partsOrig.ToString(CultureInfo.CurrentCulture)
-                    , parts.ToString(CultureInfo.CurrentCulture)
-                    , dif.ToString(CultureInfo.CurrentCulture));
+                if (!Utilitats.EsZero(dif))
+                    Debug.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", compra.Prod, compra.Id
+                        , partsOrig.ToString(CultureInfo.CurrentCulture)
+                        , parts.ToString(CultureInfo.CurrentCulture)
+                        , dif.ToString(CultureInfo.CurrentCulture));
 
-                Assert.AreEqual(partsOrig, parts, 3, "\nProd: {0}. Id Mov: {1}.", d.Key.Prod, compra.Id);
+                Assert.AreEqual(partsOrig, parts, .01, "\nProd: {0}. Id Mov: {1}.", compra.Prod, compra.Id);
             }
 
             Debug.WriteLine("\n*** Fi Ok ***");
@@ -110,13 +135,13 @@ namespace UnitTestInversions
                 if(producte._Participacions == 0)
                     continue;
                 
-                var compresAnt = producte.compresAnteriors3Test(DateTime.Now, producte._Participacions);
+                var compresAnt = producte.compresDeLaVenda4Test(DateTime.Now, producte._Participacions);
 
                 foreach (var compra in compresAnt)
                 {
                     foreach (var desglosCompra in compra.DesglosCompres)
                     {
-                        totalPartsEnCartera += desglosCompra._ParticipacionsDisponiblesOrig;
+                        totalPartsEnCartera += desglosCompra._ParticipacionsUtilitzadesOrig;
                     }
                 }
             }
@@ -243,13 +268,13 @@ namespace UnitTestInversions
                 foreach (var venda in vendes)
                 {
                     List<DesglosCompra> xxx = new List<DesglosCompra>();
-                    List<Moviment> compres = venda.compresDeLaVenda3Test().ToList();
+                    List<Moviment> compres = venda.compresDeLaVenda4Test().ToList();
                     foreach (var compra in compres)
                     {
                         xxx.AddRange(compra.DesglosCompres.ToList());
                     }
 
-                    var sumaDesgolç = xxx.Sum(s => s._ParticipacionsDisponibles);
+                    var sumaDesgolç = xxx.Sum(s => s._ParticipacionsUtilitzades);
 
                     Assert.AreEqual(sumaDesgolç, venda.Participacions, .0001, "Prod:{0}. VendaId:{1}", venda.Prod, venda.Id);
                     cont++;
@@ -286,85 +311,6 @@ namespace UnitTestInversions
             Debug.WriteLine("\n TotOk:{0}. TotError:{1}.", compres.Count - contErr, contErr);
 
             Assert.AreEqual(contErr, 0);
-
-            Debug.WriteLine("\nFinal");
-        }
-
-
-        /// <summary>
-        /// Comprova que ProvaParticipacionsDisponiblesCompra reparteix correctament.
-        /// </summary>
-        [TestMethod]
-        public void ProvaParticipacionsDisponiblesCompra()
-        {
-            // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
-            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
-            var compra = sessio.Moviments.Single(w => w.Id == 101);
-
-            double partsRest;
-            List<DesglosCompra> xxx = compra.DesglosCompres.ToList();
-
-            partsRest = compra.trobaParticipacionsDisponiblesDesgloçCompraTest(0, 20);
-            Assert.AreEqual(xxx[0]._ParticipacionsDisponibles, 20, .001);
-            Assert.AreEqual(xxx[1]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(xxx[2]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(partsRest, 0, .001);
-
-            DesglosCompra.ResetParticipacionsDisponibles(compra.DesglosCompres);
-            partsRest = compra.trobaParticipacionsDisponiblesDesgloçCompraTest(0, 30);
-            Assert.AreEqual(xxx[0]._ParticipacionsDisponibles, 24.7409, .001);
-            Assert.AreEqual(xxx[1]._ParticipacionsDisponibles, 5.2591, .001);
-            Assert.AreEqual(xxx[2]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(partsRest, 0, .001);
-
-            DesglosCompra.ResetParticipacionsDisponibles(compra.DesglosCompres);
-            partsRest = compra.trobaParticipacionsDisponiblesDesgloçCompraTest(0, 200);
-            Assert.AreEqual(xxx[0]._ParticipacionsDisponibles, 24.7409, .001);
-            Assert.AreEqual(xxx[1]._ParticipacionsDisponibles, 48.378, .001);
-            Assert.AreEqual(xxx[2]._ParticipacionsDisponibles, 87.6339, .001);
-            Assert.AreEqual(partsRest, 39.2472, .001);
-
-            DesglosCompra.ResetParticipacionsDisponibles(compra.DesglosCompres);
-            partsRest = compra.trobaParticipacionsDisponiblesDesgloçCompraTest(5, 10);
-            Assert.AreEqual(xxx[0]._ParticipacionsDisponibles, 10, .001);
-            Assert.AreEqual(xxx[1]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(xxx[2]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(partsRest, 0, .001);
-
-            DesglosCompra.ResetParticipacionsDisponibles(compra.DesglosCompres);
-            partsRest = compra.trobaParticipacionsDisponiblesDesgloçCompraTest(20, 20);
-            Assert.AreEqual(xxx[0]._ParticipacionsDisponibles, 4.7409, .001);
-            Assert.AreEqual(xxx[1]._ParticipacionsDisponibles, 15.2591, .001);
-            Assert.AreEqual(xxx[2]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(partsRest, 0, .001);
-
-            DesglosCompra.ResetParticipacionsDisponibles(compra.DesglosCompres);
-            partsRest = compra.trobaParticipacionsDisponiblesDesgloçCompraTest(30, 50);
-            Assert.AreEqual(xxx[0]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(xxx[1]._ParticipacionsDisponibles, 43.1189, .001);
-            Assert.AreEqual(xxx[2]._ParticipacionsDisponibles, 6.8811, .001);
-            Assert.AreEqual(partsRest, 0, .001);
-
-            DesglosCompra.ResetParticipacionsDisponibles(compra.DesglosCompres);
-            partsRest = compra.trobaParticipacionsDisponiblesDesgloçCompraTest(80, 10);
-            Assert.AreEqual(xxx[0]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(xxx[1]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(xxx[2]._ParticipacionsDisponibles, 10, .001);
-            Assert.AreEqual(partsRest, 0, .001);
-
-            DesglosCompra.ResetParticipacionsDisponibles(compra.DesglosCompres);
-            partsRest = compra.trobaParticipacionsDisponiblesDesgloçCompraTest(80, 100);
-            Assert.AreEqual(xxx[0]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(xxx[1]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(xxx[2]._ParticipacionsDisponibles, 80.7528, .001);
-            Assert.AreEqual(partsRest, 19.2472, .001);
-
-            DesglosCompra.ResetParticipacionsDisponibles(compra.DesglosCompres);
-            partsRest = compra.trobaParticipacionsDisponiblesDesgloçCompraTest(0, 0);
-            Assert.AreEqual(xxx[0]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(xxx[1]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(xxx[2]._ParticipacionsDisponibles, 0, .001);
-            Assert.AreEqual(partsRest, 0, .001);
 
             Debug.WriteLine("\nFinal");
         }
@@ -426,7 +372,7 @@ namespace UnitTestInversions
             {
                 var costTotalOrig = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig * s._PreuParticipacioOrig);
                 var preuUnitOrig = Math.Round(costTotalOrig / compra.Participacions, 4);
-                var preuOrigAnt = Math.Round(compra._PreuCompraParticipacioOrigen, 4);
+                var preuOrigAnt = Math.Round(compra.calculaImportCompraOrigen3(false, false) / compra.Participacions);
                 var dif = Math.Round(preuUnitOrig - preuOrigAnt, 2);
 
                 if (dif > 0)

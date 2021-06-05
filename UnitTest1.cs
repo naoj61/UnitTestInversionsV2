@@ -87,14 +87,28 @@ namespace UnitTestInversions
 
                     using (var dbContextTransaction = conn.Database.BeginTransaction())
                     {
-                        foreach (var co in conn.Moviments
-                            .Where(w => w.UsuariId == usu.Id && w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
+                        Debug.WriteLine("\nCompres reals");
+                        
+                        var movsUsuari = conn.Moviments.Where(w => w.UsuariId == usu.Id).ToList();
+
+                        var compresReals = movsUsuari.Where(w => w._EsCompraReal).OrderBy(o => o.Data);
+                        foreach (var co in compresReals)
                         {
                             Debug.WriteLine("co.Id = {0}", co.Id);
 
-                            //if(co.Id == 101)
                             co.desgloçarCompra(conn, co.RefTraspas);
                         }
+
+                        Debug.WriteLine("\nCompres traspassos");
+
+                        var compresTrasp = movsUsuari.Where(w => w._EsCompra && w._EsTraspas).OrderBy(o => o.Data);
+                        foreach (var co in compresTrasp)
+                        {
+                            Debug.WriteLine("co.Id = {0}", co.Id);
+
+                            co.desgloçarCompra(conn, co.RefTraspas);
+                        }
+
                         //conn.SaveChanges();
                         dbContextTransaction.Commit();
                     }
@@ -105,7 +119,6 @@ namespace UnitTestInversions
         }
 
         #endregion *** Executar un cop sobre la BD de la versió: 1.9.5.3 ***
-
 
         /// <summary>
         /// Elimina camp PreuParticipacioOrigen de la taula Moviments
@@ -138,8 +151,7 @@ namespace UnitTestInversions
         /// <summary>
         /// Esborra la taula "DesglosCompres" i la crea de nou.
         /// </summary>
-        [
-            TestMethod]
+        [TestMethod]
         public void GeneraDesgloçCompresMovId26()
         {
             //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
@@ -277,54 +289,157 @@ namespace UnitTestInversions
             Debug.WriteLine("\n*** Fi Ok ***");
         }
 
+
+
+        /// <summary>
+        /// Esborra un traspàs.
+        /// </summary>
+        [TestMethod]
+        public void EsborraTraspas()
+        {
+            const int idTraspasVenda = 194;
+
+            using (var conn = new InversionsBDContext())
+            {
+                Debug.WriteLine("********** Inici **********");
+                // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
+                Usuari.Seleccionat = conn.Usuaris.Single(s => s.Id == (int)Usuari.Usuaris.Joan);
+
+                var traspasVenda = conn.Moviments.Single(s => s.Id == idTraspasVenda);
+
+                using (var dbContextTransaction = conn.Database.BeginTransaction())
+                {
+                    var delete = String.Format("DELETE from [DesglosCompres] where [MovCompraId] = {0}", traspasVenda._MovimentRefCompra.Id);
+                    conn.Database.ExecuteSqlCommand(delete);
+                    
+                    delete = String.Format("DELETE from [Moviments] where [Id] >= {0} AND [Id] <= {1}", idTraspasVenda, traspasVenda._MovimentRefCompra.Id);
+                    var filesDesglosCompres = conn.Database.ExecuteSqlCommand(delete);
+
+                    if (filesDesglosCompres != 2)
+                    {
+                        dbContextTransaction.Rollback();
+                        throw new Exception();
+                    }
+
+                    dbContextTransaction.Commit();
+                }
+            }
+
+            Debug.WriteLine("\nFinal");
+        }
+
         #endregion *** Modifiquen dades ***
 
 
         #region *** Test ***
 
+
         /// <summary>
-        /// 27/04/2021
+        /// 28/05/2021. 
         /// </summary>
         [TestMethod]
-        public void xxx()
+        public void ComprovaSplitContraSplit()
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            double importTot = 0;
-            double partsTot = 0;
+            var data = DateTime.Now;
+            var prodsAccions = sessio.ProdAccions.ToList();
 
-            Debug.WriteLine("\nProd\tId\tParts\tImport");
-            foreach (var prodFons in sessio.ProdFons)
+            Debug.WriteLine("Prod\tImport");
+            foreach (var prod in prodsAccions)
             {
-                if (prodFons.Id != 3)
-                    continue;
+                var partsEnCartera = prod.numParticipacionsEnDataTest(data);
 
-                prodFons.resetParticipacionsDisponibles();
+                double importBrut = partsEnCartera * prod._PreuParticipacioActual;
+                if(importBrut>0)
+                    Debug.WriteLine("{0}\t{1}", prod, importBrut.ToString("#,###.000", CultureInfo.CurrentCulture));
+            }
+        }
 
-                var compres = prodFons.MovimentsProducteUsuari.Where(w => w._EsCompraReal).ToList();
-                
-                foreach (var compra in compres)
+
+        /// <summary>
+        /// 28/05/2021. 
+        /// </summary>
+        [TestMethod]
+        public void ParticipacionsOriginalsEnCartera()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            var prodsFons = sessio.ProdFons.ToList();
+            Dictionary<Producte, double[]> totProdsOrig = new Dictionary<Producte, double[]>();
+            Dictionary<Producte, double[]> totProdsAct = new Dictionary<Producte, double[]>();
+            var data = DateTime.Now;
+
+            foreach (var prod in prodsFons)
+            {
+                var partsEnCartera = prod.numParticipacionsEnDataTest(data);
+                if (partsEnCartera > 0)
                 {
-                    try
+                    var compres = prod.compresDeLaVenda4Test(data, partsEnCartera);
+                    foreach (var compra in compres)
                     {
-                        var parts = compra.partsEnCarteraCompra();
-                        var import = parts * compra.PreuParticipacio;
-                        if (!Utilitats.EsZero(import))
+                        foreach (var desglosCompra in compra.DesglosCompres.Where(w => w._ParticipacionsUtilitzades > 0))
                         {
-                            importTot += import;
-                            partsTot += parts;
-                            Debug.WriteLine("{0}-{1}\t{2}\t{3}\t{4}", prodFons.Id, prodFons, compra.Id, parts.ToString(CultureInfo.CurrentCulture), import.ToString(CultureInfo.CurrentCulture)); 
+                            var prodOrig = desglosCompra.MovCompraOrig.Prod;
+                            if (!totProdsOrig.ContainsKey(prodOrig))
+                                totProdsOrig.Add(prodOrig, new double[] { 0, 0 });
+
+                            totProdsOrig[prodOrig][0] += desglosCompra._ParticipacionsUtilitzadesOrig;
+                            totProdsOrig[prodOrig][1] += desglosCompra._ParticipacionsUtilitzadesOrig * desglosCompra._PreuParticipacioOrig;
+
+                            var prodAct = desglosCompra.MovCompra.Prod;
+                            if (!totProdsAct.ContainsKey(prodAct))
+                                totProdsAct.Add(prodAct, new double[] { 0, 0 });
+
+                            totProdsAct[prodAct][0] += desglosCompra._ParticipacionsUtilitzades;
+                            totProdsAct[prodAct][1] += desglosCompra._ParticipacionsUtilitzades * prod._PreuParticipacioActual;
                         }
                     }
-                    catch (Exception ex)
-                    {
-                    }
                 }
-
             }
-            Debug.WriteLine("\nParts: {0}. Import total: {1}", partsTot.ToString(CultureInfo.CurrentCulture), importTot.ToString(CultureInfo.CurrentCulture));
 
-            Debug.WriteLine("\n*** Fi Ok ***");
+            Debug.WriteLine("Prod Orig\tParts\tImport");
+            foreach (KeyValuePair<Producte, double[]> totProd in totProdsOrig.OrderBy(o => o.Key._NomProducte))
+            {
+                var prod = totProd.Key;
+                var parts = totProd.Value[0];
+                var importC = totProd.Value[1];
+
+                Debug.WriteLine("{0}\t{1}\t{2}", prod, parts.ToString("#,###.000", CultureInfo.CurrentCulture), importC.ToString("#,###.00", CultureInfo.CurrentCulture));
+            }
+
+
+            Debug.WriteLine("\n\nProd Act\tParts\tImport");
+            foreach (KeyValuePair<Producte, double[]> totProd in totProdsAct.OrderBy(o => o.Key._NomProducte))
+            {
+                var prod = totProd.Key;
+                var parts = totProd.Value[0];
+                var importC = totProd.Value[1];
+
+                Debug.WriteLine("{0}\t{1}\t{2}", prod, parts.ToString("#,###.000", CultureInfo.CurrentCulture), importC.ToString("#,###.00", CultureInfo.CurrentCulture));
+            }
+        }
+
+
+        /// <summary>
+        /// 12/05/2021. Compara compresAnteriors4Test amb compresAnteriors3Test.
+        /// </summary>
+        [TestMethod]
+        public void ComprovaVendesDeLaCompra()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            double participEnCartera;
+
+            //var compres = sessio.MovimentsUsuari.Where(w => w._EsCompra);
+            //foreach (var compra in compres)
+            //{
+            //    var vendes = compra.vendesDeLaCompraTest();
+            //}
+
+            var compra = sessio.Moviments.Single(w => w.Id == 182);
+            var vendesCompra = compra.vendesDeLaCompraTest();
+            var partsCart = compra.Participacions - vendesCompra.Sum(s => s._ParticipacionsUtilitzades);
         }
 
 
@@ -337,20 +452,32 @@ namespace UnitTestInversions
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
             const int any = 2018;
-
+            double pigTot = 0;
             Debug.WriteLine("\n");
             var vendes = sessio.MovimentsUsuari.Where(w => w._EsVendaReal && w.Data.Year == any).ToList();
             foreach (var venda in vendes)
             {
-                Debug.WriteLine(String.Format("{0}\t{1}\t{2}\t{3}\t{4}", venda.Prod, venda.Id, venda.Data.ToShortDateString(), venda.Participacions, venda.PreuParticipacio));
+                Debug.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", venda.Prod, venda.Id, venda.Data.ToShortDateString()
+                    , venda.Participacions, venda.PreuParticipacio);
+
+                var xx = venda.compresDeLaVenda4Test().ToList();
+                var impO = xx.Sum(s => s.DesglosCompres.Sum(ss => ss._ParticipacionsUtilitzadesOrig * ss._PreuParticipacioOrig));
+                //var impOX = xx.Sum(s => s.DesglosCompres.Sum(ss => ss._ParticipacionsDisponiblesXOrig * ss._PreuParticipacioOrig));
+                var pUtil = xx.Sum(s => s._ParticipacionsUtilitzades);
+                //var pDisp = xx.Sum(s => s._ParticipacionsDisponiblesX);
+                var pUtilDesg = xx.Sum(s => s.DesglosCompres.Sum(ss => ss._ParticipacionsUtilitzadesOrig));
+                //var pDispDesg = xx.Sum(s => s.DesglosCompres.Sum(ss => ss._ParticipacionsDisponiblesXOrig));
+
+                var pigVenda = venda._ImportBrut - impO;
+                pigTot += pigVenda;
             }
             Debug.WriteLine("\n");
 
-            double impVendes = vendes.Sum(venda => venda.ImportBrut);
+            double impVendes = vendes.Sum(venda => venda._ImportBrut);
             double impCompres = vendes.Sum(venda => venda.calculaImportCompraOrigen3(true, true));
             var pigs = impVendes - impCompres;
 
-            var pig = Producte.Pig2(Producte.TipusProducte.Tots, any, false);
+            var pig = Producte.Pig2(Producte.TipusProducte.Tots, any, false, false);
 
             Debug.WriteLine(String.Format("PiG trib:{0}", pig.ToString("#,##0.00")));
 
@@ -390,7 +517,7 @@ namespace UnitTestInversions
             {
                 var costOrig = venda.calculaImportCompraOrigen3(true, true);
 
-                var piG = venda.ImportBrut - costOrig;
+                var piG = venda._ImportBrut - costOrig;
 
                 pigTotalVenut += piG;
             }
@@ -526,7 +653,7 @@ namespace UnitTestInversions
             }
 
 
-            var compres = sessio.Moviments.Single(w => w.Id == 91).compresDeLaVenda3Test().ToList();
+            var compres = sessio.Moviments.Single(w => w.Id == 91).compresDeLaVenda4Test().ToList();
 
             Assert.AreEqual(5, compres.Count(), "Número de files desgloç incorrecte");
 

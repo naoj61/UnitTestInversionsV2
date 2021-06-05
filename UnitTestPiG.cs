@@ -21,6 +21,50 @@ namespace UnitTestInversions
 
         #region *** Test ***
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [TestMethod]
+        public void PigDeUnProducteAny()
+        {
+            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
+
+            double pig;
+            double pigTot = 0;
+            Producte prod;
+            const int any = 2019;
+
+            Debug.WriteLine("\nPiG any: {0}\n", any);
+
+            // Id: 7-Arcelor
+            prod = sessio.Productes.Single(w => w.Id == 7);
+            pig = Math.Round(prod.pig2TotalTest(any, false, false), 3);
+            pigTot += pig;
+            Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
+
+            // Id: 15-Templeton Emerging Mkts Sm Cos N Acc $
+            prod = sessio.Productes.Single(w => w.Id == 15);
+            pig = Math.Round(prod.pig2TotalTest(any, false, false), 3);
+            pigTot += pig;
+            Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
+
+            // Id: 3-Asian Smaller Companies Fund
+            prod = sessio.Productes.Single(w => w.Id == 3);
+            pig = Math.Round(prod.pig2TotalTest(any, false, false), 3);
+            pigTot += pig;
+            Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
+
+            // Id: 4-Thailand A-USD
+            prod = sessio.Productes.Single(w => w.Id == 4);
+            pig = Math.Round(prod.pig2TotalTest(any, false, false), 3);
+            pigTot += pig;
+            Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
+
+            Debug.WriteLine("PiG Total:\t{0}{1}", "",pigTot.ToString(CultureInfo.CurrentCulture));
+        }
+
+
         /// <summary>
         /// Vull veure que fan el mogollon de mètodes pig de Productes.
         /// </summary>
@@ -41,8 +85,8 @@ namespace UnitTestInversions
                 bool imprimeixTotal = false;
                 for (int any = 2010; any < 2021; any++)
                 {
-                    var pig = prod.pig2TotalTest(any);
-                    var pig2 = prod.pig2TotalTest(new DateTime(any, 1, 1), new DateTime(any, 12, 31), any == DateTime.Today.Year);
+                    var pig = prod.pig2TotalTest(any, true, false);
+                    var pig2 = prod.pig2TotalTest(new DateTime(any, 1, 1), new DateTime(any, 12, 31), any == DateTime.Today.Year, false);
                     tPig += pig;
                     tPig2 += pig2;
                     if (!Utilitats.EsZero(pig) || !Utilitats.EsZero(pig2))
@@ -156,11 +200,11 @@ namespace UnitTestInversions
 
             double piGActual = 0;
 
-            double importTotalCompresReals = sessio.MovimentsUsuari.Where(w => w._EsCompraReal).Sum(compra => compra.ImportNet);
+            double importTotalCompresReals = sessio.MovimentsUsuari.Where(w => w._EsCompraReal).Sum(compra => compra._ImportNet);
 
-            double importTotalVendesReals = sessio.MovimentsUsuari.Where(w => w._EsVendaReal).Sum(venda => venda.ImportNet);
+            double importTotalVendesReals = sessio.MovimentsUsuari.Where(w => w._EsVendaReal).Sum(venda => venda._ImportNet);
 
-            double importTotalDividends = sessio.MovimentsUsuari.Where(w => w._EsDividents).Sum(divident => divident.ImportNet);
+            double importTotalDividends = sessio.MovimentsUsuari.Where(w => w._EsDividents).Sum(divident => divident._ImportNet);
 
             double pigtotal2 = 0;
             double importTotalCarteraActual = 0;
@@ -175,8 +219,6 @@ namespace UnitTestInversions
             }
 
             piGActual = importTotalVendesReals + importTotalCarteraActual + importTotalDividends - importTotalCompresReals;
-
-
 
             Debug.WriteLine(String.Format("ImportTotalCompresReals: {0}", importTotalCompresReals.ToString("C2")));
             Debug.WriteLine(String.Format("ImportTotalVendesReals: {0}", importTotalVendesReals.ToString("C2")));
