@@ -333,6 +333,18 @@ namespace UnitTestInversions
 
         #region *** Test ***
 
+        [TestMethod]
+        public void ComprovaCompresRealsAmbVendesEnDiferentsAnys()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+            
+            var compraArcelor = sessio.Moviments.Single(w => w.Id == 166);
+            var venda = compraArcelor.pigDeLaCompraEsElBoooooTest(false, true, null, true, false);
+            var venda2018 = compraArcelor.pigDeLaCompraEsElBoooooTest(false, true, 2018, true, false);
+            var venda2019 = compraArcelor.pigDeLaCompraEsElBoooooTest(false, true, 2019, true, false);
+
+            Assert.AreEqual(venda, venda2018 + venda2019, 5);
+        }
 
         /// <summary>
         /// 28/05/2021. 
@@ -344,6 +356,10 @@ namespace UnitTestInversions
 
             var data = DateTime.Now;
             var prodsAccions = sessio.ProdAccions.ToList();
+
+            var arcelor = sessio.ProdAccions.Single(w => w.Id == 7);
+            var movs = arcelor.compresDeLaVenda4Test(DateTime.Now);
+            var preuPartAct = arcelor._PreuParticipacioActual;
 
             Debug.WriteLine("Prod\tImport");
             foreach (var prod in prodsAccions)
