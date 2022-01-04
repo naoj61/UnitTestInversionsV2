@@ -333,6 +333,70 @@ namespace UnitTestInversions
 
         #region *** Test ***
 
+
+        [TestMethod]
+        public void PigProshares_2015_2016()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            var proshares = sessio.ProdAccions.Single(w => w.Id == 17);
+            var pig2015 = proshares.pig2CarteraTest(2015, true, true);
+            var pig2016 = proshares.pig2CarteraTest(2016, true, true);
+            var pig2017 = proshares.pig2CarteraTest(2017, true, true);
+
+            //Assert.AreEqual(12950.6981, tot, 3);
+        }
+        [TestMethod]
+        public void PiG_2021()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            var pigAcc = Producte.Pig2CarteraTest(Producte.TipusProducte.Accions, null, 2022, true, true);
+            var pigRF = Producte.Pig2CarteraTest(Producte.TipusProducte.Fons,  TipusFons.RF, 2022, true, true);
+            var pigRV = Producte.Pig2CarteraTest(Producte.TipusProducte.Fons,  TipusFons.RV, 2022, true, true);
+            var pigFons = Producte.Pig2CarteraTest(Producte.TipusProducte.Fons,  TipusFons.Tots, 2022, true, true);
+            var pigTot = Producte.Pig2CarteraTest(Producte.TipusProducte.Tots,  null, 2022, true, true);
+
+            Assert.AreEqual(pigRF + pigRV, pigFons, 3);
+            Assert.AreEqual(pigRF + pigRV + pigAcc, pigTot, 3);
+            Assert.AreEqual(pigFons + pigAcc, pigTot, 3);
+
+        }
+
+        [TestMethod]
+        public void ComprovaPiGArcelor_2021()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            var arcelor = sessio.ProdAccions.Single(w => w.Id == 7);
+            var pigArcelor = arcelor.pig2TotalTest(2021, false, false);
+
+            var c191 = sessio.Moviments.Single(s => s.Id == 191).pigDeLaCompraEsElBoooooTest(false, true, 2021, true, false);
+            var c182 = sessio.Moviments.Single(s => s.Id == 182).pigDeLaCompraEsElBoooooTest(false, true, 2021, true, false);
+            var tot = c191 + c182;
+
+            Assert.AreEqual(pigArcelor, tot, 3);
+            Assert.AreEqual(12950.6981, tot, 3);
+        }
+
+        [TestMethod]
+        public void ComprovaPiGTelefonica_2015()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            var telefonica = sessio.ProdAccions.Single(w => w.Id == 9);
+            var pigTel = telefonica.pig2TotalTest(2015, false, false);
+
+            var c77 = sessio.Moviments.Single(s => s.Id == 77).pigDeLaCompraEsElBoooooTest(false, true, 2015, true, false);
+            var c85 = sessio.Moviments.Single(s => s.Id == 85).pigDeLaCompraEsElBoooooTest(false, true, 2015, true, false);
+            var c99 = sessio.Moviments.Single(s => s.Id == 99).pigDeLaCompraEsElBoooooTest(false, true, 2015, true, false);
+            var c106 = sessio.Moviments.Single(s => s.Id == 106).pigDeLaCompraEsElBoooooTest(false, true, 2015, true, false);
+            var tot = c77 + c85 + c99 + c106;
+
+            Assert.AreEqual(pigTel, tot, 5);
+            Assert.AreEqual(9418.22, tot, 3);
+        }
+
         [TestMethod]
         public void ComprovaCompresRealsAmbVendesEnDiferentsAnys()
         {
