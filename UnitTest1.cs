@@ -70,7 +70,7 @@ namespace UnitTestInversions
         [TestMethod]
         public void GeneraDesgloçCompres()
         {
-            //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar la taula.
+            return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar la taula.
 
             var sessio = new InversionsBDContext();
 
@@ -154,7 +154,7 @@ namespace UnitTestInversions
         [TestMethod]
         public void GeneraDesgloçCompresMovId26()
         {
-            //return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
+            return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
 
             using (var conn = new InversionsBDContext())
             {
@@ -335,6 +335,32 @@ namespace UnitTestInversions
 
 
         [TestMethod]
+        public void ComprovaPartsOrig()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            foreach (var compra in sessio.Moviments.Where(w=>w._EsCompra))
+            {
+                
+            }
+
+            int iguals = 0;
+            int diferents = 0;
+            foreach (var desg in sessio.DesglosCompras)
+            {
+                if(desg.MovCompra.DesglosCompres.Count == 1)
+                    continue;
+                if (Utilitats.SonIguals(desg.ParticipacionsOrig, desg.MovCompraOrig.Participacions))
+                    iguals++;
+                else
+                    diferents++;
+            }
+
+            //Assert.AreEqual(12950.6981, tot, 3);
+        }
+
+
+        [TestMethod]
         public void PigProshares_2015_2016()
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
@@ -346,6 +372,7 @@ namespace UnitTestInversions
 
             //Assert.AreEqual(12950.6981, tot, 3);
         }
+
         [TestMethod]
         public void PiG_2021()
         {
@@ -369,7 +396,7 @@ namespace UnitTestInversions
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
             var arcelor = sessio.ProdAccions.Single(w => w.Id == 7);
-            var pigArcelor = arcelor.pig2TotalTest(2021, false, false);
+            var pigArcelor = arcelor.pig3TotalTest(2021, false, false);
 
             var c191 = sessio.Moviments.Single(s => s.Id == 191).pigDeLaCompraEsElBoooooTest(false, true, 2021, true, false);
             var c182 = sessio.Moviments.Single(s => s.Id == 182).pigDeLaCompraEsElBoooooTest(false, true, 2021, true, false);
@@ -385,7 +412,7 @@ namespace UnitTestInversions
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
             var telefonica = sessio.ProdAccions.Single(w => w.Id == 9);
-            var pigTel = telefonica.pig2TotalTest(2015, false, false);
+            var pigTel = telefonica.pig3TotalTest(2015, false, false);
 
             var c77 = sessio.Moviments.Single(s => s.Id == 77).pigDeLaCompraEsElBoooooTest(false, true, 2015, true, false);
             var c85 = sessio.Moviments.Single(s => s.Id == 85).pigDeLaCompraEsElBoooooTest(false, true, 2015, true, false);

@@ -21,6 +21,86 @@ namespace UnitTestInversions
     {
         #region *** Test ***
 
+
+        /// <summary>
+        /// Comprova que les compres reals de fons, coincideixen amb la cartera actual més les vendes reals
+        /// </summary>
+        [TestMethod]
+        public void ComprovaCompresOrig()
+        {
+            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
+
+            List<Moviment> compresRealsAmbCartera = new List<Moviment>();
+            List<ProdFons> fonsAmbCartera = new List<ProdFons>();
+            foreach (var prod in sessio.ProdFons)
+            {
+                if (prod._Participacions <= 0)
+                    continue;
+
+                fonsAmbCartera.Add(prod);
+
+                foreach (var compraAmbCartera in prod.compresDeLaVenda4Test(DateTime.Now))
+                {
+                    foreach (var desglosCompra in compraAmbCartera.DesglosCompres)
+                    {
+                        if (!compresRealsAmbCartera.Contains(desglosCompra.MovCompraOrig))
+                            compresRealsAmbCartera.Add(desglosCompra.MovCompraOrig);
+                    }
+                }
+            }
+
+            foreach (var compraReal in compresRealsAmbCartera)
+            {
+                var id = compraReal.Id;
+
+                double partsComprades = sessio.Moviments.Single(w => w.Id == id).Participacions;
+
+                double partsVenudes = 0;
+                foreach (var venda in sessio.MovimentsUsuari.ToList().Where(w => w.Prod is ProdFons && w._EsVendaReal))
+                {
+                    var compresDeLaVenda = venda.compresDeLaVenda4Test();
+                    foreach (var compra in compresDeLaVenda)
+                    {
+                        foreach (var desglosCompra in compra.DesglosCompres)
+                        {
+                            if (desglosCompra.MovCompraOrigId == id)
+                                if (venda._EsVendaReal)
+                                    partsVenudes += desglosCompra._ParticipacionsUtilitzadesOrig;
+                        }
+                    }
+                }
+
+                double partsEnCartera = 0;
+
+                foreach (var prod in fonsAmbCartera)
+                {
+                    if (prod._ValorActualEnCartera > 0)
+                    {
+                        foreach (var compra in prod.compresDeLaVenda4Test(DateTime.Now))
+                        {
+                            foreach (var desglosCompra in compra.DesglosCompres)
+                            {
+                                if (desglosCompra.MovCompraOrigId == id)
+                                    partsEnCartera += desglosCompra._ParticipacionsUtilitzadesOrig;
+                            }
+                        }
+                    }
+                }
+
+                if (Utilitats.ComparaNumeros(partsComprades, partsEnCartera + partsVenudes) != 0)
+                {
+                    var dif = partsComprades - partsVenudes - partsEnCartera;
+                    Debug.WriteLine("\nNo cuadra. Prod: {0}. Comprades: {1}. Venudes: {2}. En cartera: {3}. Dif: {4}. Preu cost: {5}."
+                        , compraReal.Prod, partsComprades, partsVenudes, partsEnCartera, dif, dif * compraReal.PreuParticipacio);
+                }
+
+                Assert.AreEqual(partsComprades, partsEnCartera + partsVenudes, 2
+                    , "No cuadra. Prod: {0}. Comprades: {1}. Venudes: {2}. En cartera: {3}"
+                    , compraReal.Prod, partsComprades, partsVenudes, partsEnCartera);
+            }
+        }
+
+
         /// <summary>
         /// Valida que 
         /// Si son accions les participacions a Moviments siguin les mateixes que les de DesglosCompres.
