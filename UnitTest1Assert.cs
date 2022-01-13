@@ -39,7 +39,7 @@ namespace UnitTestInversions
 
                 fonsAmbCartera.Add(prod);
 
-                foreach (var compraAmbCartera in prod.compresDeLaVenda4Test(DateTime.Now))
+                foreach (var compraAmbCartera in prod.compresDeParticionsTest(DateTime.Now))
                 {
                     foreach (var desglosCompra in compraAmbCartera.DesglosCompres)
                     {
@@ -76,7 +76,7 @@ namespace UnitTestInversions
                 {
                     if (prod._ValorActualEnCartera > 0)
                     {
-                        foreach (var compra in prod.compresDeLaVenda4Test(DateTime.Now))
+                        foreach (var compra in prod.compresDeParticionsTest(DateTime.Now))
                         {
                             foreach (var desglosCompra in compra.DesglosCompres)
                             {
@@ -160,7 +160,7 @@ namespace UnitTestInversions
             var prodsFonsAmbPartsEncartera = sessio.ProdFons.ToList().Where(w => w._Participacions > 0);
             foreach (var prod in prodsFonsAmbPartsEncartera)
             {
-                var compresDeLaVenda = prod.compresDeLaVenda4Test(DateTime.Now, prod._Participacions);
+                var compresDeLaVenda = prod.compresDeParticionsTest(DateTime.Now, prod._Participacions);
                 foreach (var compra in compresDeLaVenda)
                 {
                     foreach (var desglosCompra in compra.DesglosCompres)
@@ -217,7 +217,7 @@ namespace UnitTestInversions
                 if(producte._Participacions == 0)
                     continue;
                 
-                var compresAnt = producte.compresDeLaVenda4Test(DateTime.Now, producte._Participacions);
+                var compresAnt = producte.compresDeParticionsTest(DateTime.Now, producte._Participacions);
 
                 foreach (var compra in compresAnt)
                 {
@@ -454,7 +454,7 @@ namespace UnitTestInversions
             {
                 var costTotalOrig = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig * s._PreuParticipacioOrig);
                 var preuUnitOrig = Math.Round(costTotalOrig / compra.Participacions, 4);
-                var preuOrigAnt = Math.Round(compra.calculaImportCompraOrigen3(false, false) / compra.Participacions);
+                var preuOrigAnt = Math.Round(compra.calculaImportCompraOrigen3(false, false) / compra.Participacions, 4);
                 var dif = Math.Round(preuUnitOrig - preuOrigAnt, 2);
 
                 if (dif > 0)

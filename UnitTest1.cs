@@ -109,7 +109,7 @@ namespace UnitTestInversions
                             co.desgloçarCompra(conn, co.RefTraspas);
                         }
 
-                        //conn.SaveChanges();
+                         //conn.SaveChanges();
                         dbContextTransaction.Commit();
                     }
                 }
@@ -173,7 +173,7 @@ namespace UnitTestInversions
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine("\nFinal");
+            Debug.WriteLine("\nFinal");
         }
 
 
@@ -218,7 +218,7 @@ namespace UnitTestInversions
                     preuParticipacioVenda = 1800;
                     participacionsVenda = prodVenda._Participacions;
                     participacionsCompra = 15000;
-                    prodVenda.desaTraspas(conn, dataVenda, participacionsVenda, preuParticipacioVenda, descripcio, dataVenda.AddSeconds(1)
+                    prodVenda.desaTraspasTest(conn, dataVenda, participacionsVenda, preuParticipacioVenda, descripcio, dataVenda.AddSeconds(1)
                         , prodCompra, participacionsCompra);
 
 
@@ -251,7 +251,6 @@ namespace UnitTestInversions
         }
 
 
-
         /// <summary>
         /// 
         /// </summary>
@@ -269,7 +268,7 @@ namespace UnitTestInversions
                 using (var dbContextTransaction = conn.Database.BeginTransaction())
                 {
                     var data = DateTime.Now.AddMinutes(-10);
-                    prodOrig.desaTraspas(conn, data, 20, 600, String.Empty, data, prodDest, 20);
+                    prodOrig.desaTraspasTest(conn, data, 20, 600, String.Empty, data, prodDest, 20);
 
                     //conn.SaveChanges();
                     dbContextTransaction.Commit();
@@ -288,7 +287,6 @@ namespace UnitTestInversions
 
             Debug.WriteLine("\n*** Fi Ok ***");
         }
-
 
 
         /// <summary>
@@ -335,14 +333,21 @@ namespace UnitTestInversions
 
 
         [TestMethod]
-        public void ComprovaPartsOrig()
+        public void ProvesDesgloçarCompra92()
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            foreach (var compra in sessio.Moviments.Where(w=>w._EsCompra))
-            {
-                
-            }
+            var co = sessio.Moviments.Single(w => w.Id == 92);
+
+
+            co.desgloçarCompra(null, co.RefTraspas);
+
+        }
+
+        [TestMethod]
+        public void ComprovaPartsOrig()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
             int iguals = 0;
             int diferents = 0;
@@ -449,7 +454,7 @@ namespace UnitTestInversions
             var prodsAccions = sessio.ProdAccions.ToList();
 
             var arcelor = sessio.ProdAccions.Single(w => w.Id == 7);
-            var movs = arcelor.compresDeLaVenda4Test(DateTime.Now);
+            var movs = arcelor.compresDeParticionsTest(DateTime.Now);
             var preuPartAct = arcelor._PreuParticipacioActual;
 
             Debug.WriteLine("Prod\tImport");
@@ -482,7 +487,7 @@ namespace UnitTestInversions
                 var partsEnCartera = prod.numParticipacionsEnDataTest(data);
                 if (partsEnCartera > 0)
                 {
-                    var compres = prod.compresDeLaVenda4Test(data, partsEnCartera);
+                    var compres = prod.compresDeParticionsTest(data, partsEnCartera);
                     foreach (var compra in compres)
                     {
                         foreach (var desglosCompra in compra.DesglosCompres.Where(w => w._ParticipacionsUtilitzades > 0))
