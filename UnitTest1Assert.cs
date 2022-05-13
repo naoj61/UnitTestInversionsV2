@@ -39,7 +39,7 @@ namespace UnitTestInversions
 
                 fonsAmbCartera.Add(prod);
 
-                foreach (var compraAmbCartera in prod.compresDeParticionsTest(DateTime.Now))
+                foreach (var compraAmbCartera in prod.compresDePartipacionsTest(DateTime.Now))
                 {
                     foreach (var desglosCompra in compraAmbCartera.DesglosCompres)
                     {
@@ -76,7 +76,7 @@ namespace UnitTestInversions
                 {
                     if (prod._ValorActualEnCartera > 0)
                     {
-                        foreach (var compra in prod.compresDeParticionsTest(DateTime.Now))
+                        foreach (var compra in prod.compresDePartipacionsTest(DateTime.Now))
                         {
                             foreach (var desglosCompra in compra.DesglosCompres)
                             {
@@ -160,7 +160,7 @@ namespace UnitTestInversions
             var prodsFonsAmbPartsEncartera = sessio.ProdFons.ToList().Where(w => w._Participacions > 0);
             foreach (var prod in prodsFonsAmbPartsEncartera)
             {
-                var compresDeLaVenda = prod.compresDeParticionsTest(DateTime.Now, prod._Participacions);
+                var compresDeLaVenda = prod.compresDePartipacionsTest(DateTime.Now, prod._Participacions);
                 foreach (var compra in compresDeLaVenda)
                 {
                     foreach (var desglosCompra in compra.DesglosCompres)
@@ -217,7 +217,7 @@ namespace UnitTestInversions
                 if(producte._Participacions == 0)
                     continue;
                 
-                var compresAnt = producte.compresDeParticionsTest(DateTime.Now, producte._Participacions);
+                var compresAnt = producte.compresDePartipacionsTest(DateTime.Now, producte._Participacions);
 
                 foreach (var compra in compresAnt)
                 {

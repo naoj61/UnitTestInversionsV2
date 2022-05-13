@@ -333,16 +333,151 @@ namespace UnitTestInversions
 
 
         [TestMethod]
+        public void xx()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            foreach (var producte in sessio.Productes)
+            {
+                var aaX = producte.costOriginalEnCartera4X();
+                var aa = producte.costOriginalEnCartera4();
+                Assert.AreEqual(aaX, aa);
+            }
+
+            //var prod = sessio.Productes.Single(w => w.Id == 5);
+            //var data = new DateTime(2015, 1, 1);
+
+
+            //var aaC = prod.compresDePartipacionsEnData(data).ToList();
+            //var bbC = prod.compresDePartipacions2X(data).ToList();
+
+            //Debug.WriteLine("\n'aaC'");
+            //foreach (var compraExt in aaC)
+            //{
+            //    Debug.WriteLine("{0}. Parts Util:{1}. Parts Ocup: {2}",
+            //        compraExt.ToString(), compraExt._PartsUtilitzades, compraExt._PartsOcupades);
+            //}
+
+            //Debug.WriteLine("\n'bbC'");
+            //foreach (var compra in bbC)
+            //{
+            //    Debug.WriteLine("{0}. Parts Util:{1}. Parts Ocup: {2}",
+            //        compra.ToString(), compra._ParticipacionsUtilitzades, compra._ParticipacionsOcupades);
+            //}
+
+            //var aa = prod.desglosCompresDePartipacionsEnData(data).ToList();
+            //var bb = prod.desglosDeCompres(data).ToList();
+
+            //Debug.WriteLine("\n'aa'");
+            //foreach (var desglosCompraExt in aa)
+            //{
+            //    Debug.WriteLine("{0}. Parts Util:{1}. Parts Ocup: {2}",
+            //        desglosCompraExt.ToString(), desglosCompraExt._PartsUtilitzades, desglosCompraExt._PartsOcupades);
+            //}
+
+            //Debug.WriteLine("\n'bb'");
+            //foreach (var desglosCompra in bb)
+            //{
+            //    Debug.WriteLine("{0}. Parts Util:{1}. Parts Ocup: {2}",
+            //        desglosCompra.ToString(), desglosCompra._ParticipacionsUtilitzades, desglosCompra._ParticipacionsOcupades);
+            //}
+        }
+
+        [TestMethod]
+        public void PigVendesAny()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+            
+            double pigTot = 0;
+
+            for (int any = 2013; any < 2022; any++)
+            {
+                var vendes = sessio.MovimentsUsuari.Where(w => w._EsVendaReal && w.Data.Year == any);
+
+                double pig = 0;
+
+                foreach (var venda in vendes)
+                {
+                    pig += venda.pig2VendaTest(true);
+                }
+
+                var dividents = sessio.MovimentsUsuari.Where(w => w._EsDividents && w.Data.Year == any).Sum(s=>s._ImportBrut);
+
+                pigTot += pig + dividents;
+
+                Debug.WriteLine("Any: {0}. PiG Net: {1}. Dividents: {2}", any, pig.ToString("C2"), dividents.ToString("C2"));
+            }
+            Debug.WriteLine("PiG Total: {0}.", pigTot.ToString("C2"));
+        }
+
+
+        //[TestMethod]
+        //public void PigDefinitiu()
+        //{
+        //    InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+        //    foreach (var producte in sessio.Productes)
+        //    {
+        //        var pig2Tot = producte.pig2TotalTest();
+        //        var pigDef = producte.pigDefinitiu();
+        //        //Assert.AreEqual(pig2Tot, pigDef, .05);
+        //    }
+
+        //    var arcelor = sessio.ProdAccions.Single(w => w.Id == 7);
+
+        //    var pig1 = arcelor.pigDefinitiu(new DateTime(2021, 12, 28), inclouEnCartera: true);
+        //    var pig2 = arcelor.pigDefinitiu(new DateTime(2021, 12, 28), inclouEnCartera: false);
+        //    var pigTot = arcelor.pigDefinitiu();
+        //}
+
+
+
+
+
+        [TestMethod]
+        public void DividendsCompra()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+            
+            /*
+                166	Compra	169,61 €
+                174	Compra	124,71 €
+                191	Compra	98,35 €
+                182	Compra	139,41 €
+                192	Compra	122,94 €
+                193	Compra	106,47 €
+             */
+
+            var co = sessio.Moviments.Single(w => w.Id == 166).dividentsDeLaCompraTest();
+            Assert.AreEqual(169.61, co, .05);
+
+            co = sessio.Moviments.Single(w => w.Id == 174).dividentsDeLaCompraTest();
+            Assert.AreEqual(124.71, co, .05);
+
+            co = sessio.Moviments.Single(w => w.Id == 191).dividentsDeLaCompraTest();
+            Assert.AreEqual(98.35, co, .05);
+
+            co = sessio.Moviments.Single(w => w.Id == 182).dividentsDeLaCompraTest();
+            Assert.AreEqual(139.41, co, .05);
+
+            co = sessio.Moviments.Single(w => w.Id == 192).dividentsDeLaCompraTest();
+            Assert.AreEqual(122.94, co, .05);
+
+            co = sessio.Moviments.Single(w => w.Id == 193).dividentsDeLaCompraTest();
+            Assert.AreEqual(106.47, co, .001);
+        }
+
+
+        [TestMethod]
         public void ProvesDesgloçarCompra92()
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
             var co = sessio.Moviments.Single(w => w.Id == 92);
-
-
+            
             co.desgloçarCompra(null, co.RefTraspas);
-
         }
+
 
         [TestMethod]
         public void ComprovaPartsOrig()
@@ -454,7 +589,7 @@ namespace UnitTestInversions
             var prodsAccions = sessio.ProdAccions.ToList();
 
             var arcelor = sessio.ProdAccions.Single(w => w.Id == 7);
-            var movs = arcelor.compresDeParticionsTest(DateTime.Now);
+            var movs = arcelor.compresDePartipacionsTest(DateTime.Now);
             var preuPartAct = arcelor._PreuParticipacioActual;
 
             Debug.WriteLine("Prod\tImport");
@@ -487,7 +622,7 @@ namespace UnitTestInversions
                 var partsEnCartera = prod.numParticipacionsEnDataTest(data);
                 if (partsEnCartera > 0)
                 {
-                    var compres = prod.compresDeParticionsTest(data, partsEnCartera);
+                    var compres = prod.compresDePartipacionsTest(data, partsEnCartera);
                     foreach (var compra in compres)
                     {
                         foreach (var desglosCompra in compra.DesglosCompres.Where(w => w._ParticipacionsUtilitzades > 0))
