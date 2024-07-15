@@ -48,6 +48,10 @@
     <Reference Include="System.ComponentModel.DataAnnotations">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.ComponentModel.DataAnnotations.dll</HintPath>
     </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -63,12 +67,19 @@
   </Choose>
   <ItemGroup>
     <Compile Include="UnitTest1Assert.cs" />
+    <Compile Include="FormNumericTextBox2.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormNumericTextBox2.Designer.cs">
+      <DependentUpon>FormNumericTextBox2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UnitTestForm.cs" />
     <Compile Include="UnitTestPiG.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Llibreries\Comuns\Comuns.csproj">
+    <ProjectReference Include="..\Llibreries\Comuns\Comuns.csproj">
       <Project>{83fff275-a1a1-4df4-a669-591cb12dcbb4}</Project>
       <Name>Comuns</Name>
     </ProjectReference>
@@ -80,6 +91,11 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="FormNumericTextBox2.resx">
+      <DependentUpon>FormNumericTextBox2.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

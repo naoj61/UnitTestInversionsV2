@@ -258,55 +258,55 @@ namespace UnitTestInversions
             InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
 
             Producte prod;
-            double costOrigEnCart;
-            double importSelf;
-            double total = 0;
+            decimal costOrigEnCart;
+            decimal importSelf;
+            decimal total = 0;
 
             Debug.WriteLine("\nProd:\tSelf:\tAquí:\tDif:");
 
-            importSelf = 777.35;
+            importSelf = 777.35M;
             prod = sessio.Productes.Single(s => s.Id == 5);
             costOrigEnCart = prod.costOriginalEnCartera2Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000",CultureInfo.CurrentCulture), prod);
 
-            importSelf = 6132.72;
+            importSelf = 6132.72M;
             prod = sessio.Productes.Single(s => s.Id == 6);
             costOrigEnCart = prod.costOriginalEnCartera2Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
 
-            importSelf = 17922.04;
+            importSelf = 17922.04M;
             prod = sessio.Productes.Single(s => s.Id == 16);
             costOrigEnCart = prod.costOriginalEnCartera2Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
 
-            importSelf = 1588.63;
+            importSelf = 1588.63M;
             prod = sessio.Productes.Single(s => s.Id == 19);
             costOrigEnCart = prod.costOriginalEnCartera2Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
 
-            importSelf = 27338.26;
+            importSelf = 27338.26M;
             prod = sessio.Productes.Single(s => s.Id == 27);
             costOrigEnCart = prod.costOriginalEnCartera2Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
 
-            importSelf = 26084.35;
+            importSelf = 26084.35M;
             prod = sessio.Productes.Single(s => s.Id == 7);
             costOrigEnCart = prod.costOriginalEnCartera2Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
 
-            importSelf = 79843.35;
+            importSelf = 79843.35M;
             //Assert.AreEqual(importSelf, total, .0001);
             Debug.WriteLine("Total\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), total.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - total).ToString("####.000", CultureInfo.CurrentCulture));
 
@@ -324,9 +324,9 @@ namespace UnitTestInversions
             InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
 
             var sumCompres = sessio.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra && w.TipusMoviment != TipusMoviment.Traspàs).Sum(s => s.Participacions);
-            var sumDesgloç = sessio.DesglosCompras.Sum(s => s.Participacions);
+            var sumDesgloç = sessio.DesglosCompres.Sum(s => s.Participacions);
 
-            Assert.AreEqual(sumCompres, sumDesgloç, .0001);
+            Assert.AreEqual((double) sumCompres, (double) sumDesgloç, .0001);
 
             Debug.WriteLine("\nFinal");
         }
@@ -381,7 +381,7 @@ namespace UnitTestInversions
             foreach (var compra in compres)
             {
                 var sumPartsDesg = compra.DesglosCompres.Sum(s => s.Participacions);
-                if (!Utilitats.SonIguals(compra.Participacions, sumPartsDesg, 2))
+                if (!Utilitats.SonIguals(compra.Participacions, sumPartsDesg))
                 {
                     if(contErr==0)
                         Debug.WriteLine("\n");
@@ -441,39 +441,39 @@ namespace UnitTestInversions
         /// <summary>
         /// Compara els preu originals amb el sistema nou i amb l'antic  a nivell de moviment compra.
         /// </summary>
-        [TestMethod]
-        public void TestPreuOriginal()
-        {
-            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
+        //[TestMethod]
+        //public void TestPreuOriginal()
+        //{
+        //    InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
 
-            Debug.WriteLine("********** Inici **********");
+        //    Debug.WriteLine("********** Inici **********");
 
-            int oks = 0, kos = 0;
+        //    int oks = 0, kos = 0;
 
-            foreach (var compra in sessio.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
-            {
-                var costTotalOrig = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig * s._PreuParticipacioOrig);
-                var preuUnitOrig = Math.Round(costTotalOrig / compra.Participacions, 4);
-                var preuOrigAnt = Math.Round(compra.calculaImportCompraOrigen3(false, false) / compra.Participacions, 4);
-                var dif = Math.Round(preuUnitOrig - preuOrigAnt, 2);
+        //    foreach (var compra in sessio.Moviments.Where(w => w.TipusMoviment == TipusMoviment.Compra).OrderBy(o => o.Data).ToList())
+        //    {
+        //        var costTotalOrig = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig * s._PreuParticipacioOrig);
+        //        var preuUnitOrig = Math.Round(costTotalOrig / compra.Participacions, 4);
+        //        var preuOrigAnt = Math.Round(compra.calculaImportCompraOrigen3(false, false) / compra.Participacions, 4);
+        //        var dif = Math.Round(preuUnitOrig - preuOrigAnt, 2);
 
-                if (dif > 0)
-                {
-                    Debug.WriteLine("MovId = {0}\tDif = {3}\tpreuUnitOrig = {1}\tpreuOrigAnt = {2}"
-                        , compra.Id, preuUnitOrig.ToString("#,##0.00€"), preuOrigAnt.ToString("#,##0.00€"), dif.ToString("#,##0.00€"));
-                    kos++;
-                }
-                else
-                {
-                    oks++;
-                }
-            }
+        //        if (dif > 0)
+        //        {
+        //            Debug.WriteLine("MovId = {0}\tDif = {3}\tpreuUnitOrig = {1}\tpreuOrigAnt = {2}"
+        //                , compra.Id, preuUnitOrig.ToString("#,##0.00€"), preuOrigAnt.ToString("#,##0.00€"), dif.ToString("#,##0.00€"));
+        //            kos++;
+        //        }
+        //        else
+        //        {
+        //            oks++;
+        //        }
+        //    }
 
-            Debug.WriteLine("\nOks={0}. Kos={1}", oks, kos);
+        //    Debug.WriteLine("\nOks={0}. Kos={1}", oks, kos);
 
-            Assert.IsTrue(kos == 0, "\nHi ha compres que no quadren");
-            Debug.WriteLine("Final");
-        }
+        //    Assert.IsTrue(kos == 0, "\nHi ha compres que no quadren");
+        //    Debug.WriteLine("Final");
+        //}
 
         #endregion *** Test ***
 

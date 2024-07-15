@@ -30,8 +30,8 @@ namespace UnitTestInversions
         {
             InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
 
-            double pig;
-            double pigTot = 0;
+            decimal pig;
+            decimal pigTot = 0;
             Producte prod;
             const int any = 2019;
 
@@ -73,8 +73,8 @@ namespace UnitTestInversions
         {
             InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
 
-            double tPig = 0;
-            double tPig2 = 0;
+            decimal tPig = 0;
+            decimal tPig2 = 0;
 
             Console.WriteLine("Producte\tAny\tPiG\tPiG2");
             foreach (var prod in sessio.Productes.ToList())
@@ -123,9 +123,9 @@ namespace UnitTestInversions
             Console.WriteLine("Producte\tPiG Total\tPiG Producte\tPiG En cartera");
 
             var data = new DateTime(2020, 07, 11).AddMilliseconds(-1);
-            double pig2Total = 0;
-            double pig2Producte = 0;
-            double pig2EnCartera = 0;
+            decimal pig2Total = 0;
+            decimal pig2Producte = 0;
+            decimal pig2EnCartera = 0;
 
             foreach (var prod in sessio.Productes.ToList())
             {
@@ -155,9 +155,13 @@ namespace UnitTestInversions
                 pig2Producte.ToString("#,##0.00 €"),
                 pig2EnCartera.ToString("#,##0.00 €"));
 
-            Assert.IsTrue(Utilitats.SonIguals(pig2Total, 60489.18, 2));
-            Assert.IsTrue(Utilitats.SonIguals(pig2Producte, 60486.24, 2));
-            Assert.IsTrue(Utilitats.SonIguals(pig2EnCartera, 32204.63, 2));
+            //Assert.IsTrue(Utilitats.SonIguals(pig2Total, 60489.18, 2));
+            //Assert.IsTrue(Utilitats.SonIguals(pig2Producte, 60486.24, 2));
+            //Assert.IsTrue(Utilitats.SonIguals(pig2EnCartera, 32204.63, 2));
+
+            Assert.IsTrue(pig2Total == 60489.18M);
+            Assert.IsTrue(pig2Producte == 60486.24M);
+            Assert.IsTrue(pig2EnCartera == 32204.63M);
         }
 
 
@@ -198,16 +202,16 @@ namespace UnitTestInversions
         {
             InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
 
-            double piGActual = 0;
+            decimal piGActual = 0;
 
-            double importTotalCompresReals = sessio.MovimentsUsuari.Where(w => w._EsCompraReal).Sum(compra => compra._ImportNet);
+            var importTotalCompresReals = Moviment.MovimentsUsuari.Where(w => w._EsCompraReal).Sum(compra => compra._ImportNet);
 
-            double importTotalVendesReals = sessio.MovimentsUsuari.Where(w => w._EsVendaReal).Sum(venda => venda._ImportNet);
+            var importTotalVendesReals = Moviment.MovimentsUsuari.Where(w => w._EsVendaReal).Sum(venda => venda._ImportNet);
 
-            double importTotalDividends = sessio.MovimentsUsuari.Where(w => w._EsDividents).Sum(divident => divident._ImportNet);
+            var importTotalDividends = Moviment.MovimentsUsuari.Where(w => w._EsDividents).Sum(divident => divident._ImportNet);
 
-            double pigtotal2 = 0;
-            double importTotalCarteraActual = 0;
+            decimal pigtotal2 = 0;
+            decimal importTotalCarteraActual = 0;
             foreach (var prod in sessio.Productes)
             {
                 if (prod._Participacions > 0)

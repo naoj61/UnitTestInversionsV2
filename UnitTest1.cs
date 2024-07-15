@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Comuns;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Inversions;
@@ -192,9 +193,9 @@ namespace UnitTestInversions
             Producte prodVenda;
             Producte prodCompra;
             DateTime dataVenda = DateTime.Now;
-            double participacionsVenda;
-            double participacionsCompra;
-            double preuParticipacioVenda;
+            decimal participacionsVenda;
+            decimal participacionsCompra;
+            decimal preuParticipacioVenda;
             const string descripcio = null;
 
             using (var conn = new InversionsBDContext())
@@ -332,24 +333,233 @@ namespace UnitTestInversions
         #region *** Test ***
 
         [TestMethod]
+        public void ProvesVaries1()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+            
+            Debug.WriteLine("MovId\tProd\tProdId");
+
+            foreach (var producte in sessio.Productes.OrderBy(o => o.OrdreGrid))
+            {
+                for (uint any = 2000; any <= 2022; any++)
+                {
+                    //var pigAnt = producte.pig2CarteraTest(any, true, false);
+                    //var pigAct = producte.pig2Cartera2Test(any, true, false);
+
+                    //Assert.AreEqual(pigAnt, pigAct, 0.00001);
+
+                    //if (!Utilitats.EsZero(pigAnt))
+                    //    Debug.WriteLine("{0}-{1}\t{2}\t{3}\t{4}", producte.Id, producte, any, pigAnt, pigAct);
+                }
+            }
+        }
+
+        [TestMethod]
+        public void ArbreCompresAnteriors()
+        {
+            /*
+             * Productes amb participacions.
+             * Compres de les participacions en cartera del producte.
+             * Pot ser que només corresponguin una part de totes les participacions de la compra.
+             * Si és compra original, desar.
+             * Sinó, Trobar la venda traspàs d'aquesta compra.
+             * Com que és possible que no s'utilitzin totes les parts de la compra, tampoc s'utilitzaran totes les de la venda.
+             * Trobar les compres de les parts de la venda i repetir el procés fins que totes les compres sigin originals.
+             */
+
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+            var compraInicial = Moviment.MovimentsUsuari.Single(w => w.Id == 1231 && w._EsCompra);
+            
+            Debug.WriteLine("\n\nCompra inicial: Prod: {0}. Id: {1}", compraInicial.Prod, compraInicial.Id);
+
+            Moviment vendaCompra = compraInicial._MovimentRefCompra;
+            var costTot = compresOriginals(vendaCompra);
+
+            Debug.WriteLine(String.Format("\n\nCost total: {0}.", costTot.ToString("#,###.000", CultureInfo.CurrentCulture)));
+        }
+
+        private decimal compresOriginals(Moviment vendaCompra)
+        {
+            decimal preuCost = 0;
+
+            Debug.WriteLine("\nVenda: Prod: {0}. Id: {1}", vendaCompra.Prod, vendaCompra.Id);
+
+            var compresVenda = vendaCompra.Prod.compresDePartipacionsEnData(vendaCompra.Data, vendaCompra.Participacions).ToList();
+            foreach (var compra in compresVenda)
+            {
+                Debug.WriteLine("\tCompra: Prod: {0}. Id: {1}. Parts util: {2}. Preu part: {3}", compra._Compra.Prod, compra._Id, compra._PartsUtilitzades,
+                    compra._PreuParticipacio.ToString("#,###.000", CultureInfo.CurrentCulture));
+            }
+
+            foreach (var compra in compresVenda)
+            {
+                if (compra._Compra._MovimentRefCompra != null)
+                    preuCost = compresOriginals(compra._Compra._MovimentRefCompra);
+
+                if(compra._Compra._EsOrigen)
+                {
+                    preuCost += compra._PartsUtilitzades * compra._PreuParticipacio;
+                }
+            }
+            return preuCost;
+        }
+
+
+        private static int Potencia(int base1, int exponent)
+        {
+            // Si l'exponent és 0, la potència és 1
+            if (exponent == 0)
+            {
+                return 1;
+            }
+                // Si l'exponent és 1, la potència és la mateixa base
+            else if (exponent == 1)
+            {
+                return base1;
+            }
+                // En cas contrari, cridem la funció recursivament amb la base i l'exponent decrementat en 1
+            else
+            {
+                var xx = base1 * Potencia(base1, exponent - 1);
+                return xx;
+            }
+        }
+
+        /// <summary>
+        /// Investigació de les diferències entre el PiG real que surt a self i el que em surt a mi.
+        /// </summary>
+        [TestMethod]
+        public void DifPiGSelfApp()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+
+
+            // Calcula limport total original de les compres en cartera.
+            var compresRealsFons = Moviment.MovimentsUsuari.Where(w => w.Prod is ProdFons && w._EsCompraReal).Sum(s => s._ImportBrut);
+            var vendesRealsFons = Moviment.MovimentsUsuari.Where(w => w.Prod is ProdFons && w._EsVendaReal).Sum(s => s._ImportBrut);
+            var tot = compresRealsFons - vendesRealsFons;
+            Debug.WriteLine(String.Format("\n\nTotal Compres en cartera:\t\t{0}\n\n", tot.ToString("#,###.000", CultureInfo.CurrentCulture)));
+
+            return;
+
+            Debug.WriteLine("\n\nProd/tData/tImport");
+            Debug.WriteLine("Compres");
+            decimal totCompres = 0;
+            foreach (Moviment compra in Moviment.MovimentsUsuari.Where(w => w.Prod is ProdAccions && w._EsCompraReal))
+            {
+                Debug.WriteLine("{0}\t{1}\t{2}", compra.Prod, compra.Data.ToShortDateString(), compra.Participacions.ToString("#,###.000", CultureInfo.CurrentCulture));
+                totCompres += compra.Participacions;
+            }
+            Debug.WriteLine(String.Format("Total:\t\t{0}", totCompres.ToString("#,###.000", CultureInfo.CurrentCulture)));
+
+            Debug.WriteLine("\nvendes");
+            decimal totVendes = 0;
+            foreach (Moviment venda in Moviment.MovimentsUsuari.Where(w => w.Prod is ProdAccions && w._EsVendaReal))
+            {
+                Debug.WriteLine("{0}\t{1}\t{2}", venda.Prod, venda.Data.ToShortDateString(), venda.Participacions.ToString("#,###.000", CultureInfo.CurrentCulture));
+                totVendes += venda.Participacions;
+            }
+            Debug.WriteLine(String.Format("Total:\t\t{0}", totVendes.ToString("#,###.000", CultureInfo.CurrentCulture)));
+
+            // Preu compra original dels productes actuals.
+            Dictionary<Producte, decimal> compresOrigApp = new Dictionary<Producte, decimal>();
+
+            // Llista preus compra orig dels productes actuals.
+            Dictionary<Producte, List<DesglosCompraExt>> compresOrigAppDesgl = new Dictionary<Producte, List<DesglosCompraExt>>();
+
+            // Llista de compres originals amb participacions avui.
+            Dictionary<Moviment, decimal> compresOrigSelf = new Dictionary<Moviment, decimal>();
+
+
+            foreach (var prod in sessio.ProdFons.ToList().Where(prod => !Utilitats.EsZero(prod._Participacions)))
+            {
+                var ss = prod.desglosCompresDeParticipacionsEnData(DateTime.Now, prod._Participacions).ToList();
+
+                compresOrigAppDesgl.Add(prod, ss);
+
+                compresOrigApp.Add(prod, ss.Sum(s=>s._PartsUtilitzadesOrig* s._PreuParticipacioOrig));
+
+                foreach (var compres in ss)
+                {
+                    if (compresOrigSelf.ContainsKey(compres._CompraOrig))
+                        compresOrigSelf[compres._CompraOrig] += compres._PartsUtilitzadesOrig;
+                    else
+                        compresOrigSelf[compres._CompraOrig] = compres._PartsUtilitzadesOrig;
+                }
+            }
+
+            // Llista preus compra orig dels productes actuals.
+            Debug.WriteLine("\n\nProductes actuals amb compres originals");
+            Debug.WriteLine("Prod\tImp compra Orig App");
+            foreach (KeyValuePair<Producte, decimal> compraOrig in compresOrigApp.OrderBy(o => o.Key.OrdreGrid))
+            {
+                Debug.WriteLine("{0}\t{1}", compraOrig.Key, compraOrig.Value.ToString("#,###.000", CultureInfo.CurrentCulture));
+            }
+
+            // Llista preus compra orig dels productes actuals.
+            Debug.WriteLine("\n\nProductes actuals amb desgloç de compres originals");
+            Debug.WriteLine("Prod\tProd Orig\tImp compra Orig App");
+            foreach (KeyValuePair<Producte, List<DesglosCompraExt>> compraOrig in compresOrigAppDesgl.OrderBy(o => o.Key.OrdreGrid))
+            {
+                Debug.WriteLine("{0}", compraOrig.Key);
+                foreach (DesglosCompraExt desglosCompraExt in compraOrig.Value)
+                {
+                    Debug.WriteLine("\t{0}\t{1}", desglosCompraExt._CompraOrig.Prod
+                        , (desglosCompraExt._PreuParticipacioOrig * desglosCompraExt._PartsUtilitzadesOrig).ToString("#,###.000", CultureInfo.CurrentCulture));
+                }
+            }
+
+            // Llista preus compra orig dels productes originals.
+            Debug.WriteLine("\n\nProductes originals amb participacions en cartera");
+            Debug.WriteLine("\n\nProductes actuals amb compres originals");
+            Debug.WriteLine("Prod\tImp compra Orig Self");
+            foreach (KeyValuePair<Moviment, decimal> compraOrig in compresOrigSelf.OrderBy(o => o.Key.Prod.OrdreGrid))
+            {
+                Debug.WriteLine("{0}\t{1}", compraOrig.Key.Prod, (compraOrig.Value * compraOrig.Key.PreuParticipacio).ToString("#,###.000", CultureInfo.CurrentCulture));
+            }
+
+            Debug.WriteLine("\n\n");
+
+
+
+            return;
+
+
+            decimal importCompresOrig = 0;
+            foreach (KeyValuePair<Moviment, decimal> compraOrig in compresOrigSelf)
+            {
+                importCompresOrig += compraOrig.Key.PreuParticipacio * compraOrig.Value;
+            }
+
+            Debug.WriteLine("Prod\tParts\tProdId");
+
+            Dictionary<Producte, decimal> compresProdOrig =
+                compresOrigSelf.ToDictionary(keyValuePair => keyValuePair.Key.Prod, keyValuePair => keyValuePair.Value);
+
+            return;
+        }
+
+
+        [TestMethod]
         public void PigVendesAny()
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
             
-            double pigTot = 0;
+            decimal pigTot = 0;
 
             for (int any = 2013; any < 2022; any++)
             {
-                var vendes = sessio.MovimentsUsuari.Where(w => w._EsVendaReal && w.Data.Year == any);
+                var vendes = Moviment.MovimentsUsuari.Where(w => w._EsVendaReal && w.Data.Year == any);
 
-                double pig = 0;
+                decimal pig = 0;
 
                 foreach (var venda in vendes)
                 {
-                    pig += venda.pig2VendaTest(true);
+                    pig += venda.pigVendaTest(true);
                 }
 
-                var dividents = sessio.MovimentsUsuari.Where(w => w._EsDividents && w.Data.Year == any).Sum(s=>s._ImportBrut);
+                var dividents = Moviment.MovimentsUsuari.Where(w => w._EsDividents && w.Data.Year == any).Sum(s => s._ImportBrut);
 
                 pigTot += pig + dividents;
 
@@ -359,27 +569,60 @@ namespace UnitTestInversions
         }
 
 
-        //[TestMethod]
-        //public void PigDefinitiu()
-        //{
-        //    InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+        [TestMethod]
+        public void PigDefinitiu()
+        {
+            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-        //    foreach (var producte in sessio.Productes)
-        //    {
-        //        var pig2Tot = producte.pig2TotalTest();
-        //        var pigDef = producte.pigDefinitiu();
-        //        //Assert.AreEqual(pig2Tot, pigDef, .05);
-        //    }
+            foreach (var prod in sessio.Productes.ToList())
+            {
+                //var prod = sessio.Productes.Single(w => w.Id == 5);
 
-        //    var arcelor = sessio.ProdAccions.Single(w => w.Id == 7);
+                foreach (var compra in prod.MovimentsProducteUsuari.Where(w => w._EsCompra))
+                {
+                    //var piG1 = compra.pigVendesRealsTest(true, true, null);
+                    //var piG2 = compra.pigVendesReals2Test(true, true, null);
 
-        //    var pig1 = arcelor.pigDefinitiu(new DateTime(2021, 12, 28), inclouEnCartera: true);
-        //    var pig2 = arcelor.pigDefinitiu(new DateTime(2021, 12, 28), inclouEnCartera: false);
-        //    var pigTot = arcelor.pigDefinitiu();
-        //}
+                    //Assert.AreEqual(piG1, piG2);
+
+                    //var vendes1 = compra.vendesDeLaCompra().ToList();
+                    //var vendes2 = compra.vendesDeLaCompra2().ToList();
+
+                    //Assert.AreEqual(vendes1.Count(w => w._ParticipacionsUtilitzades > 0), vendes2.Count());
+
+                    //for (int i = 0; i < vendes2.Count() - 1; i++)
+                    //{
+                    //    var v1 = vendes1[i];
+                    //    var v2 = vendes2[i];
+
+                    //    Assert.AreEqual(v1._ParticipacionsOcupades, v2._PartsOcupades);
+                    //    Assert.AreEqual(v1._ParticipacionsUtilitzades, v2._PartsUtilitzades);
+                    //}
+                }
+            }
 
 
 
+            //Assert.AreEqual(parts1,parts2);
+
+            //Debug.WriteLine("Parts={0}", parts2);
+
+            //var parts = compra.partsEnCarteraCompra2(new DateTime(2022, 1, 10));
+
+
+            //    foreach (var producte in sessio.Productes)
+            //    {
+            //        var pig2Tot = producte.pig2TotalTest();
+            //        var pigDef = producte.pigDefinitiu();
+            //        //Assert.AreEqual(pig2Tot, pigDef, .05);
+            //    }
+
+            //    var arcelor = sessio.ProdAccions.Single(w => w.Id == 7);
+
+            //    var pig1 = arcelor.pigDefinitiu(new DateTime(2021, 12, 28), inclouEnCartera: true);
+            //    var pig2 = arcelor.pigDefinitiu(new DateTime(2021, 12, 28), inclouEnCartera: false);
+            //    var pigTot = arcelor.pigDefinitiu();
+        }
 
 
         [TestMethod]
@@ -397,22 +640,22 @@ namespace UnitTestInversions
              */
 
             var co = sessio.Moviments.Single(w => w.Id == 166).dividentsDeLaCompraTest();
-            Assert.AreEqual(169.61, co, .05);
+            Assert.AreEqual(169.61, (double) co, .05);
 
             co = sessio.Moviments.Single(w => w.Id == 174).dividentsDeLaCompraTest();
-            Assert.AreEqual(124.71, co, .05);
+            Assert.AreEqual(124.71, (double)co, .05);
 
             co = sessio.Moviments.Single(w => w.Id == 191).dividentsDeLaCompraTest();
-            Assert.AreEqual(98.35, co, .05);
+            Assert.AreEqual(98.35, (double)co, .05);
 
             co = sessio.Moviments.Single(w => w.Id == 182).dividentsDeLaCompraTest();
-            Assert.AreEqual(139.41, co, .05);
+            Assert.AreEqual(139.41, (double)co, .05);
 
             co = sessio.Moviments.Single(w => w.Id == 192).dividentsDeLaCompraTest();
-            Assert.AreEqual(122.94, co, .05);
+            Assert.AreEqual(122.94, (double)co, .05);
 
             co = sessio.Moviments.Single(w => w.Id == 193).dividentsDeLaCompraTest();
-            Assert.AreEqual(106.47, co, .001);
+            Assert.AreEqual(106.47, (double)co, .001);
         }
 
 
@@ -434,7 +677,7 @@ namespace UnitTestInversions
 
             int iguals = 0;
             int diferents = 0;
-            foreach (var desg in sessio.DesglosCompras)
+            foreach (var desg in sessio.DesglosCompres)
             {
                 if(desg.MovCompra.DesglosCompres.Count == 1)
                     continue;
@@ -473,9 +716,9 @@ namespace UnitTestInversions
             var pigFons = Producte.Pig2CarteraTest(Producte.TipusProducte.Fons,  TipusFons.Tots, 2022, true, true);
             var pigTot = Producte.Pig2CarteraTest(Producte.TipusProducte.Tots,  null, 2022, true, true);
 
-            Assert.AreEqual(pigRF + pigRV, pigFons, 3);
-            Assert.AreEqual(pigRF + pigRV + pigAcc, pigTot, 3);
-            Assert.AreEqual(pigFons + pigAcc, pigTot, 3);
+            Assert.AreEqual((double)(pigRF + pigRV), (double)pigFons, 3);
+            Assert.AreEqual((double)(pigRF + pigRV + pigAcc), (double)pigTot, 3);
+            Assert.AreEqual((float)(pigFons + pigAcc), (double)pigTot, 3);
 
         }
 
@@ -487,12 +730,12 @@ namespace UnitTestInversions
             var arcelor = sessio.ProdAccions.Single(w => w.Id == 7);
             var pigArcelor = arcelor.pig3TotalTest(2021, false, false);
 
-            var c191 = sessio.Moviments.Single(s => s.Id == 191).pigDeLaCompraEsElBoooooTest(false, true, 2021, true, false);
-            var c182 = sessio.Moviments.Single(s => s.Id == 182).pigDeLaCompraEsElBoooooTest(false, true, 2021, true, false);
+            var c191 = sessio.Moviments.Single(s => s.Id == 191).pigCompraTest(false, true, 2021, true, false);
+            var c182 = sessio.Moviments.Single(s => s.Id == 182).pigCompraTest(false, true, 2021, true, false);
             var tot = c191 + c182;
 
-            Assert.AreEqual(pigArcelor, tot, 3);
-            Assert.AreEqual(12950.6981, tot, 3);
+            Assert.AreEqual((double)pigArcelor, (double)tot, 3);
+            Assert.AreEqual(12950.6981, (double)tot, 3);
         }
 
         [TestMethod]
@@ -503,14 +746,14 @@ namespace UnitTestInversions
             var telefonica = sessio.ProdAccions.Single(w => w.Id == 9);
             var pigTel = telefonica.pig3TotalTest(2015, false, false);
 
-            var c77 = sessio.Moviments.Single(s => s.Id == 77).pigDeLaCompraEsElBoooooTest(false, true, 2015, true, false);
-            var c85 = sessio.Moviments.Single(s => s.Id == 85).pigDeLaCompraEsElBoooooTest(false, true, 2015, true, false);
-            var c99 = sessio.Moviments.Single(s => s.Id == 99).pigDeLaCompraEsElBoooooTest(false, true, 2015, true, false);
-            var c106 = sessio.Moviments.Single(s => s.Id == 106).pigDeLaCompraEsElBoooooTest(false, true, 2015, true, false);
+            var c77 = sessio.Moviments.Single(s => s.Id == 77).pigCompraTest(false, true, 2015, true, false);
+            var c85 = sessio.Moviments.Single(s => s.Id == 85).pigCompraTest(false, true, 2015, true, false);
+            var c99 = sessio.Moviments.Single(s => s.Id == 99).pigCompraTest(false, true, 2015, true, false);
+            var c106 = sessio.Moviments.Single(s => s.Id == 106).pigCompraTest(false, true, 2015, true, false);
             var tot = c77 + c85 + c99 + c106;
 
-            Assert.AreEqual(pigTel, tot, 5);
-            Assert.AreEqual(9418.22, tot, 3);
+            Assert.AreEqual((double)pigTel, (double)tot, 5);
+            Assert.AreEqual(9418.22, (double) tot, 3);
         }
 
         [TestMethod]
@@ -519,11 +762,11 @@ namespace UnitTestInversions
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
             
             var compraArcelor = sessio.Moviments.Single(w => w.Id == 166);
-            var venda = compraArcelor.pigDeLaCompraEsElBoooooTest(false, true, null, true, false);
-            var venda2018 = compraArcelor.pigDeLaCompraEsElBoooooTest(false, true, 2018, true, false);
-            var venda2019 = compraArcelor.pigDeLaCompraEsElBoooooTest(false, true, 2019, true, false);
+            var venda = compraArcelor.pigCompraTest(false, true, null, true, false);
+            var venda2018 = compraArcelor.pigCompraTest(false, true, 2018, true, false);
+            var venda2019 = compraArcelor.pigCompraTest(false, true, 2019, true, false);
 
-            Assert.AreEqual(venda, venda2018 + venda2019, 5);
+            Assert.AreEqual((double)venda, (double)(venda2018 + venda2019), 5);
         }
 
         /// <summary>
@@ -546,7 +789,7 @@ namespace UnitTestInversions
         //    {
         //        var partsEnCartera = prod.numParticipacionsEnDataTest(data);
 
-        //        double importBrut = partsEnCartera * prod._PreuParticipacioActual;
+        //        decimal importBrut = partsEnCartera * prod._PreuParticipacioActual;
         //        if(importBrut>0)
         //            Debug.WriteLine("{0}\t{1}", prod, importBrut.ToString("#,###.000", CultureInfo.CurrentCulture));
         //    }
@@ -562,8 +805,8 @@ namespace UnitTestInversions
         //    InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
         //    var prodsFons = sessio.ProdFons.ToList();
-        //    Dictionary<Producte, double[]> totProdsOrig = new Dictionary<Producte, double[]>();
-        //    Dictionary<Producte, double[]> totProdsAct = new Dictionary<Producte, double[]>();
+        //    Dictionary<Producte, decimal[]> totProdsOrig = new Dictionary<Producte, decimal[]>();
+        //    Dictionary<Producte, decimal[]> totProdsAct = new Dictionary<Producte, decimal[]>();
         //    var data = DateTime.Now;
 
         //    foreach (var prod in prodsFons)
@@ -578,14 +821,14 @@ namespace UnitTestInversions
         //                {
         //                    var prodOrig = desglosCompra.MovCompraOrig.Prod;
         //                    if (!totProdsOrig.ContainsKey(prodOrig))
-        //                        totProdsOrig.Add(prodOrig, new double[] { 0, 0 });
+        //                        totProdsOrig.Add(prodOrig, new decimal[] { 0, 0 });
 
         //                    totProdsOrig[prodOrig][0] += desglosCompra._ParticipacionsUtilitzadesOrig;
         //                    totProdsOrig[prodOrig][1] += desglosCompra._ParticipacionsUtilitzadesOrig * desglosCompra._PreuParticipacioOrig;
 
         //                    var prodAct = desglosCompra.MovCompra.Prod;
         //                    if (!totProdsAct.ContainsKey(prodAct))
-        //                        totProdsAct.Add(prodAct, new double[] { 0, 0 });
+        //                        totProdsAct.Add(prodAct, new decimal[] { 0, 0 });
 
         //                    totProdsAct[prodAct][0] += desglosCompra._ParticipacionsUtilitzades;
         //                    totProdsAct[prodAct][1] += desglosCompra._ParticipacionsUtilitzades * prod._PreuParticipacioActual;
@@ -595,7 +838,7 @@ namespace UnitTestInversions
         //    }
 
         //    Debug.WriteLine("Prod Orig\tParts\tImport");
-        //    foreach (KeyValuePair<Producte, double[]> totProd in totProdsOrig.OrderBy(o => o.Key._NomProducte))
+        //    foreach (KeyValuePair<Producte, decimal[]> totProd in totProdsOrig.OrderBy(o => o.Key._NomProducte))
         //    {
         //        var prod = totProd.Key;
         //        var parts = totProd.Value[0];
@@ -606,7 +849,7 @@ namespace UnitTestInversions
 
 
         //    Debug.WriteLine("\n\nProd Act\tParts\tImport");
-        //    foreach (KeyValuePair<Producte, double[]> totProd in totProdsAct.OrderBy(o => o.Key._NomProducte))
+        //    foreach (KeyValuePair<Producte, decimal[]> totProd in totProdsAct.OrderBy(o => o.Key._NomProducte))
         //    {
         //        var prod = totProd.Key;
         //        var parts = totProd.Value[0];
@@ -625,7 +868,7 @@ namespace UnitTestInversions
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            double participEnCartera;
+            decimal participEnCartera;
 
             //var compres = sessio.MovimentsUsuari.Where(w => w._EsCompra);
             //foreach (var compra in compres)
@@ -635,7 +878,7 @@ namespace UnitTestInversions
 
             var compra = sessio.Moviments.Single(w => w.Id == 182);
             var vendesCompra = compra.vendesDeLaCompraTest();
-            var partsCart = compra.Participacions - vendesCompra.Sum(s => s._ParticipacionsUtilitzades);
+            var partsCart = compra.Participacions - vendesCompra.Sum(s => s._PartsUtilitzades);
         }
 
 
@@ -648,7 +891,7 @@ namespace UnitTestInversions
         //    InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
         //    const int any = 2018;
-        //    double pigTot = 0;
+        //    decimal pigTot = 0;
         //    Debug.WriteLine("\n");
         //    var vendes = sessio.MovimentsUsuari.Where(w => w._EsVendaReal && w.Data.Year == any).ToList();
         //    foreach (var venda in vendes)
@@ -669,8 +912,8 @@ namespace UnitTestInversions
         //    }
         //    Debug.WriteLine("\n");
 
-        //    double impVendes = vendes.Sum(venda => venda._ImportBrut);
-        //    double impCompres = vendes.Sum(venda => venda.calculaImportCompraOrigen3(true, true));
+        //    decimal impVendes = vendes.Sum(venda => venda._ImportBrut);
+        //    decimal impCompres = vendes.Sum(venda => venda.calculaImportCompraOrigen3(true, true));
         //    var pigs = impVendes - impCompres;
 
         //    var pig = Producte.Pig2(Producte.TipusProducte.Tots, any, false, false);
@@ -683,107 +926,107 @@ namespace UnitTestInversions
         /// <summary>
         /// 
         /// </summary>
-        [TestMethod]
-        public void PiGNou()
-        {
-            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+        //[TestMethod]
+        //public void PiGNou()
+        //{
+        //    InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            double pigTotalEnCartera = 0;
-            foreach (var prod in sessio.Productes)
-            {
-                var valorAct = prod._ValorActualEnCartera;
+        //    decimal pigTotalEnCartera = 0;
+        //    foreach (var prod in sessio.Productes)
+        //    {
+        //        var valorAct = prod._ValorActualEnCartera;
 
-                Moviment venda = new Moviment();
-                venda.Prod = prod;
-                venda.Data = DateTime.Now;
-                venda.TipusMoviment = TipusMoviment.Venda;
-                venda.Participacions = prod._Participacions;
+        //        Moviment venda = new Moviment();
+        //        venda.Prod = prod;
+        //        venda.Data = DateTime.Now;
+        //        venda.TipusMoviment = TipusMoviment.Venda;
+        //        venda.Participacions = prod._Participacions;
 
-                var costOrig = venda.calculaImportCompraOrigen3(true, true);
+        //        var costOrig = venda.calculaImportCompraOrigen3(true, true);
 
-                var piG = valorAct - costOrig;
+        //        var piG = valorAct - costOrig;
 
-                pigTotalEnCartera += piG;
-            }
+        //        pigTotalEnCartera += piG;
+        //    }
 
-            Debug.WriteLine("\nPiG total en cartera:{0}", pigTotalEnCartera);
+        //    Debug.WriteLine("\nPiG total en cartera:{0}", pigTotalEnCartera);
 
-            double pigTotalVenut = 0;
-            foreach (var venda in sessio.MovimentsUsuari.Where(w => w._EsVendaReal))
-            {
-                var costOrig = venda.calculaImportCompraOrigen3(true, true);
+        //    decimal pigTotalVenut = 0;
+        //    foreach (var venda in sessio.MovimentsUsuari.Where(w => w._EsVendaReal))
+        //    {
+        //        var costOrig = venda.calculaImportCompraOrigen3(true, true);
 
-                var piG = venda._ImportBrut - costOrig;
+        //        var piG = venda._ImportBrut - costOrig;
 
-                pigTotalVenut += piG;
-            }
+        //        pigTotalVenut += piG;
+        //    }
 
-            Debug.WriteLine("PiG total venut:{0}", pigTotalVenut);
+        //    Debug.WriteLine("PiG total venut:{0}", pigTotalVenut);
 
-            Debug.WriteLine("PiG total:{0}", pigTotalEnCartera + pigTotalVenut);
+        //    Debug.WriteLine("PiG total:{0}", pigTotalEnCartera + pigTotalVenut);
 
-            Debug.WriteLine("\n*** Fi Ok ***");
-        }
+        //    Debug.WriteLine("\n*** Fi Ok ***");
+        //}
 
         /// <summary>
         /// 
         /// </summary>
-        [TestMethod]
-        public void VendesDeCompra()
-        {
-            InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
+        //[TestMethod]
+        //public void VendesDeCompra()
+        //{
+        //    InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            double pigTotal = 0;
-            Moviment compra;
-            double piG;
-            const double preuPartsEnCartera = 24.71;
+        //    decimal pigTotal = 0;
+        //    Moviment compra;
+        //    decimal piG;
+        //    const decimal preuPartsEnCartera = 24.71;
 
-            Debug.WriteLine("preuPartsEnCartera: {0}.\n", preuPartsEnCartera);
+        //    Debug.WriteLine("preuPartsEnCartera: {0}.\n", preuPartsEnCartera);
 
-            compra = sessio.Moviments.Single(w => w.Id == 166);
-            piG = compra.pigDeLaCompraTest(preuPartsEnCartera);
-            Debug.WriteLine("Id: {0}. PiG: {1}.", compra.Id, piG);
-            if (preuPartsEnCartera == 21)
-                Assert.AreEqual(-12314.272, piG, "PiG incorrecte");
-            pigTotal += piG;
+        //    compra = sessio.Moviments.Single(w => w.Id == 166);
+        //    piG = compra.pigDeLaCompraTest(preuPartsEnCartera);
+        //    Debug.WriteLine("Id: {0}. PiG: {1}.", compra.Id, piG);
+        //    if (preuPartsEnCartera == 21)
+        //        Assert.AreEqual(-12314.272, piG, "PiG incorrecte");
+        //    pigTotal += piG;
 
-            compra = sessio.Moviments.Single(w => w.Id == 174);
-            piG = compra.pigDeLaCompraTest(preuPartsEnCartera);
-            Debug.WriteLine("Id: {0}. PiG: {1}.", compra.Id, piG);
-            if (preuPartsEnCartera == 21)
-                Assert.AreEqual(-1287.6, piG, "PiG incorrecte");
-            pigTotal += piG;
+        //    compra = sessio.Moviments.Single(w => w.Id == 174);
+        //    piG = compra.pigDeLaCompraTest(preuPartsEnCartera);
+        //    Debug.WriteLine("Id: {0}. PiG: {1}.", compra.Id, piG);
+        //    if (preuPartsEnCartera == 21)
+        //        Assert.AreEqual(-1287.6, piG, "PiG incorrecte");
+        //    pigTotal += piG;
 
-            compra = sessio.Moviments.Single(w => w.Id == 178);
-            piG = compra.pigDeLaCompraTest(preuPartsEnCartera);
-            Debug.WriteLine("Id: {0}. PiG: {1}.", compra.Id, piG);
-            if (preuPartsEnCartera == 21)
-                Assert.AreEqual(3377.56, piG, "PiG incorrecte");
-            pigTotal += piG;
+        //    compra = sessio.Moviments.Single(w => w.Id == 178);
+        //    piG = compra.pigDeLaCompraTest(preuPartsEnCartera);
+        //    Debug.WriteLine("Id: {0}. PiG: {1}.", compra.Id, piG);
+        //    if (preuPartsEnCartera == 21)
+        //        Assert.AreEqual(3377.56, piG, "PiG incorrecte");
+        //    pigTotal += piG;
 
-            compra = sessio.Moviments.Single(w => w.Id == 182);
-            piG = compra.pigDeLaCompraTest(preuPartsEnCartera);
-            Debug.WriteLine("Id: {0}. PiG: {1}.", compra.Id, piG);
-            if (preuPartsEnCartera == 21)
-                Assert.AreEqual(11578.545, piG, "PiG incorrecte");
-            pigTotal += piG;
+        //    compra = sessio.Moviments.Single(w => w.Id == 182);
+        //    piG = compra.pigDeLaCompraTest(preuPartsEnCartera);
+        //    Debug.WriteLine("Id: {0}. PiG: {1}.", compra.Id, piG);
+        //    if (preuPartsEnCartera == 21)
+        //        Assert.AreEqual(11578.545, piG, "PiG incorrecte");
+        //    pigTotal += piG;
 
-            if (preuPartsEnCartera == 21)
-                Assert.AreEqual(1354.233, Math.Round(pigTotal, 3), "PiG total incorrecte");
+        //    if (preuPartsEnCartera == 21)
+        //        Assert.AreEqual(1354.233, Math.Round(pigTotal, 3), "PiG total incorrecte");
 
-            Debug.WriteLine("\n*** Fi Ok ***");
+        //    Debug.WriteLine("\n*** Fi Ok ***");
 
-            /*
-             * preuPartsEnCartera: 24.71.
+        //    /*
+        //     * preuPartsEnCartera: 24.71.
 
-                Id: 166. PiG: -1450.848.
-                Id: 174. PiG: 712.64.
-                Id: 178. PiG: 4495.712.
-                Id: 182. PiG: 17143.545.
+        //        Id: 166. PiG: -1450.848.
+        //        Id: 174. PiG: 712.64.
+        //        Id: 178. PiG: 4495.712.
+        //        Id: 182. PiG: 17143.545.
 
-                *** Fi Ok ***
-             */
-        }
+        //        *** Fi Ok ***
+        //     */
+        //}
 
         /// <summary>
         /// Comprova que el desgloç d'unes compres determinades son els esperats.
