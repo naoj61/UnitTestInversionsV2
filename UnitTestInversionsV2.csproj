@@ -66,6 +66,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="UnitTest-PiG4.cs" />
     <Compile Include="UnitTest1Assert.cs" />
     <Compile Include="FormNumericTextBox2.cs">
       <SubType>Form</SubType>

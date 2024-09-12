@@ -39,25 +39,25 @@ namespace UnitTestInversions
 
             // Id: 7-Arcelor
             prod = sessio.Productes.Single(w => w.Id == 7);
-            pig = Math.Round(prod.pig3TotalTest(any, false, false), 3);
+            pig = Math.Round(prod.pigHistoric4Test(any, false, false), 3);
             pigTot += pig;
             Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
 
             // Id: 15-Templeton Emerging Mkts Sm Cos N Acc $
             prod = sessio.Productes.Single(w => w.Id == 15);
-            pig = Math.Round(prod.pig3TotalTest(any, false, false), 3);
+            pig = Math.Round(prod.pigHistoric4Test(any, false, false), 3);
             pigTot += pig;
             Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
 
             // Id: 3-Asian Smaller Companies Fund
             prod = sessio.Productes.Single(w => w.Id == 3);
-            pig = Math.Round(prod.pig3TotalTest(any, false, false), 3);
+            pig = Math.Round(prod.pigHistoric4Test(any, false, false), 3);
             pigTot += pig;
             Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
 
             // Id: 4-Thailand A-USD
             prod = sessio.Productes.Single(w => w.Id == 4);
-            pig = Math.Round(prod.pig3TotalTest(any, false, false), 3);
+            pig = Math.Round(prod.pigHistoric4Test(any, false, false), 3);
             pigTot += pig;
             Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
 
@@ -85,7 +85,7 @@ namespace UnitTestInversions
                 bool imprimeixTotal = false;
                 for (int any = 2010; any < 2021; any++)
                 {
-                    var pig = prod.pig3TotalTest((uint)any, true, false);
+                    var pig = 0; // prod.pig3TotalTest((uint)any, true, false);
                     var pig2 = prod.pig2TotalTest(new DateTime(any, 1, 1), new DateTime(any, 12, 31), any == DateTime.Today.Year, false);
                     tPig += pig;
                     tPig2 += pig2;
@@ -180,7 +180,7 @@ namespace UnitTestInversions
                 if (producte.numParticipacionsEnDataTest(DateTime.Now) > 0)
                 //if (producte.Id == 27)
                 {
-                    var preuCost = producte.costOriginalEnCartera2Test();
+                    var preuCost = producte.costOriginalEnCartera3Test();
                     var valorAct = producte.valorEnCartera();
                     Console.WriteLine("{0}\t{1}\t{2}\t{3}",
                         producte._NomProducte,
