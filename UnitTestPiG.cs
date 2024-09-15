@@ -39,25 +39,25 @@ namespace UnitTestInversions
 
             // Id: 7-Arcelor
             prod = sessio.Productes.Single(w => w.Id == 7);
-            pig = Math.Round(prod.pigHistoric4Test(any, false, false), 3);
+            pig = Math.Round(prod.pigEnAny4Test(any, false, false), 3);
             pigTot += pig;
             Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
 
             // Id: 15-Templeton Emerging Mkts Sm Cos N Acc $
             prod = sessio.Productes.Single(w => w.Id == 15);
-            pig = Math.Round(prod.pigHistoric4Test(any, false, false), 3);
+            pig = Math.Round(prod.pigEnAny4Test(any, false, false), 3);
             pigTot += pig;
             Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
 
             // Id: 3-Asian Smaller Companies Fund
             prod = sessio.Productes.Single(w => w.Id == 3);
-            pig = Math.Round(prod.pigHistoric4Test(any, false, false), 3);
+            pig = Math.Round(prod.pigEnAny4Test(any, false, false), 3);
             pigTot += pig;
             Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
 
             // Id: 4-Thailand A-USD
             prod = sessio.Productes.Single(w => w.Id == 4);
-            pig = Math.Round(prod.pigHistoric4Test(any, false, false), 3);
+            pig = Math.Round(prod.pigEnAny4Test(any, false, false), 3);
             pigTot += pig;
             Debug.WriteLine("Prod: {0}\tPiG:\t{1}", prod, pig.ToString(CultureInfo.CurrentCulture));
 

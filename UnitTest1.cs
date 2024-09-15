@@ -356,8 +356,8 @@ namespace UnitTestInversions
             var data = DateTime.Now;
             //var data = new DateTime(2021, 12, 31);
 
-            var pig28 = prod28.pigActual4Test(false, true);
-            var pigOrig28 = prod28.pigActual4Test(true, true); // 45.896,23€ 30/08/2024
+            var pig28 = prod28.pigEnCartera4Test(false, true);
+            var pigOrig28 = prod28.pigEnCartera4Test(true, true); // 45.896,23€ 30/08/2024
             var pigH28 = pig28 + prod28.pigHistoric4Test(false, true, data);
             var pigHOrig28 = pigOrig28 + prod28.pigHistoric4Test(true, true, data);
 
@@ -368,8 +368,8 @@ namespace UnitTestInversions
 
 
             var prod27 = sessio.Productes.Single(w => w.Id == 27);
-            var pig27 = prod27.pigActual4Test(false, true);
-            var pigOrig27 = prod27.pigActual4Test(true, true); // 14.724,18€ 30/08/2024
+            var pig27 = prod27.pigEnCartera4Test(false, true);
+            var pigOrig27 = prod27.pigEnCartera4Test(true, true); // 14.724,18€ 30/08/2024
             var pigH27 = pig27 +prod27.pigHistoric4Test(false, true, data);
             var pigHOrig27 = pigOrig27 + prod27.pigHistoric4Test(true, true, data);
 
@@ -478,8 +478,8 @@ namespace UnitTestInversions
 
 
             var prodAsia = sessio.ProdFons.Single(s => s.Id == 3);
-            var pigAsia2013 = prodAsia.pigHistoric4Test(2013, false, false);
-            var pigAsia2020 = prodAsia.pigHistoric4Test(2020, false, false);
+            var pigAsia2013 = prodAsia.pigEnAny4Test(2013, false, false);
+            var pigAsia2020 = prodAsia.pigEnAny4Test(2020, false, false);
             var pigAsia2013X = prodAsia.pig2TotalTest(new DateTime(2013, 1, 1), new DateTime(2013, 12, 31), false, false);
             var pigAsia2020X = prodAsia.pig2TotalTest(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), false, false);
 
@@ -898,10 +898,10 @@ namespace UnitTestInversions
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
             var arcelor = sessio.ProdAccions.Single(w => w.Id == 7);
-            var pigArcelor = arcelor.pigHistoric4Test(2021, false, false);
+            var pigArcelor = arcelor.pigEnAny4Test(2021, false, false);
 
-            var c191 = sessio.Moviments.Single(s => s.Id == 191).pigCompraTest(false, true, 2021, true, false);
-            var c182 = sessio.Moviments.Single(s => s.Id == 182).pigCompraTest(false, true, 2021, true, false);
+            var c191 = sessio.Moviments.Single(s => s.Id == 191).pigCompraTest(false, true, 2021, true);
+            var c182 = sessio.Moviments.Single(s => s.Id == 182).pigCompraTest(false, true, 2021, true);
             var tot = c191 + c182;
 
             Assert.AreEqual((double)pigArcelor, (double)tot, 3);
@@ -914,12 +914,12 @@ namespace UnitTestInversions
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
             var telefonica = sessio.ProdAccions.Single(w => w.Id == 9);
-            var pigTel = telefonica.pigHistoric4Test(2015, false, false);
+            var pigTel = telefonica.pigEnAny4Test(2015, false, false);
 
-            var c77 = sessio.Moviments.Single(s => s.Id == 77).pigCompraTest(false, true, 2015, true, false);
-            var c85 = sessio.Moviments.Single(s => s.Id == 85).pigCompraTest(false, true, 2015, true, false);
-            var c99 = sessio.Moviments.Single(s => s.Id == 99).pigCompraTest(false, true, 2015, true, false);
-            var c106 = sessio.Moviments.Single(s => s.Id == 106).pigCompraTest(false, true, 2015, true, false);
+            var c77 = sessio.Moviments.Single(s => s.Id == 77).pigCompraTest(false, true, 2015, true);
+            var c85 = sessio.Moviments.Single(s => s.Id == 85).pigCompraTest(false, true, 2015, true);
+            var c99 = sessio.Moviments.Single(s => s.Id == 99).pigCompraTest(false, true, 2015, true);
+            var c106 = sessio.Moviments.Single(s => s.Id == 106).pigCompraTest(false, true, 2015, true);
             var tot = c77 + c85 + c99 + c106;
 
             Assert.AreEqual((double)pigTel, (double)tot, 5);
@@ -932,9 +932,9 @@ namespace UnitTestInversions
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
             
             var compraArcelor = sessio.Moviments.Single(w => w.Id == 166);
-            var venda = compraArcelor.pigCompraTest(false, true, null, true, false);
-            var venda2018 = compraArcelor.pigCompraTest(false, true, 2018, true, false);
-            var venda2019 = compraArcelor.pigCompraTest(false, true, 2019, true, false);
+            var venda = compraArcelor.pigCompraTest(false, true, null, true);
+            var venda2018 = compraArcelor.pigCompraTest(false, true, 2018, true);
+            var venda2019 = compraArcelor.pigCompraTest(false, true, 2019, true);
 
             Assert.AreEqual((double)venda, (double)(venda2018 + venda2019), 5);
         }
