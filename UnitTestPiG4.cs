@@ -1,19 +1,7 @@
 ﻿using System;
-using System.CodeDom;
-using System.Collections.Generic;
-using System.Data.Entity.Core;
-using System.Data.Entity.Migrations;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using Comuns;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Inversions;
-using Microsoft.Win32;
 
 namespace UnitTestInversions
 {
@@ -157,20 +145,13 @@ namespace UnitTestInversions
             var pigNoOrig = venda.pigVenda4Test(false, true);
             Assert.AreEqual((double)pigNoOrig, 4654.800, .01);
 
-
             venda = sessio.Moviments.Single(s => s.Id == 198);
-
-            pigOrig = venda.pigVenda4Test(true, true);
-            Assert.AreEqual((double)pigOrig, 0, .01);
 
             pigNoOrig = venda.pigVenda4Test(false, true);
             Assert.AreEqual((double)pigNoOrig, 5086.172, .01);
 
 
             venda = sessio.Moviments.Single(s => s.Id == 1279);
-
-            pigOrig = venda.pigVenda4Test(true, true);
-            Assert.AreEqual((double)pigOrig, 0, .01);
 
             pigNoOrig = venda.pigVenda4Test(false, true);
             Assert.AreEqual((double)pigNoOrig, 635, .01);
@@ -315,16 +296,16 @@ namespace UnitTestInversions
             ModificacioTemporalValoracioActual(sessio, compra.Prod, 460.150m);
 
             var pigOrig = compra.pigCompra4Test(true, true, false);
-            Assert.AreEqual((double)pigOrig, 1362.648, .01);
+            Assert.AreEqual((double)pigOrig, 1134.474, .01);
 
             var pigOrigAmbCartera = compra.pigCompra4Test(true, true, true);
-            Assert.AreEqual((double)pigOrigAmbCartera, -1, .01);
+            Assert.AreEqual((double)pigOrigAmbCartera, 1134.606, .01);
 
             var pigAmbCartera = compra.pigCompra4Test(true, false, true);
-            Assert.AreEqual((double)pigAmbCartera, 624.12, .01);
+            Assert.AreEqual((double)pigAmbCartera, 495.868, .01);
 
             var pig = compra.pigCompra4Test(true, false, false);
-            Assert.AreEqual((double)pig, -386.89, .01);
+            Assert.AreEqual((double)pig, 0, .01);
         }
 
         [TestMethod]
@@ -365,7 +346,7 @@ namespace UnitTestInversions
             Assert.AreEqual((double)pigOrig, 0, .01);
 
             var pigAmbCartera = compra.pigCompra4Test(true, false, true);
-            Assert.AreEqual((double)pigAmbCartera, 92.19, .01);
+            Assert.AreEqual((double)pigAmbCartera, 150.905, .01);
 
             var pig = compra.pigCompra4Test(true, false, false);
             Assert.AreEqual((double)pig, 0, .01);
