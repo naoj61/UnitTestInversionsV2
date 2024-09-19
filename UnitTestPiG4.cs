@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Inversions;
@@ -8,7 +12,6 @@ namespace UnitTestInversions
     [TestClass]
     public class UnitTestPiG4
     {
-
         [TestMethod]
         public void PigTotal()
         {
@@ -16,23 +19,65 @@ namespace UnitTestInversions
             
             var movUsuari = sessio.Moviments.Where(mov => mov.UsuariId == Usuari.Seleccionat.Id).ToList();
 
-            var compres = movUsuari.Where(mov => mov._EsCompraReal).ToList();
-            var vendes = movUsuari.Where(mov => mov._EsVendaReal).ToList();
-            var dividends = movUsuari.Where(mov => mov._EsDividents).ToList();
+            var compresTotes = movUsuari.Where(mov => mov._EsCompra).ToList();
+            var compresReals = movUsuari.Where(mov => mov._EsCompraReal).ToList();
+            var vendesReals = movUsuari.Where(mov => mov._EsVendaReal).ToList();
 
-            var totalCompres = compres.Sum(compra => compra.Participacions * compra.PreuParticipacio);
-            var totalVendes = vendes.Sum(venda => venda.Participacions * venda.PreuParticipacio);
+
+            //foreach (var compra in compresReals)
+            //{
+            //    comprovaCompra(compra);
+            //}
+
+            var totalCompres = compresReals.Sum(compra => compra.Participacions * compra.PreuParticipacio);
+            var totalVendes = vendesReals.Sum(venda => venda.Participacions * venda.PreuParticipacio);
             var totalDespeses = movUsuari.Sum(mov => mov.Despeses.GetValueOrDefault());
             
             var totalEnCartera = Enumerable.Sum(sessio.Productes, producte => producte.partsEnCarteraTest() * producte._PreuParticipacioActual);
 
             decimal pig = (totalEnCartera + totalVendes) - (totalCompres + totalDespeses);
 
-            var pigVendesReals = vendes.Sum(venda => venda.pigVenda4Test(true, true, false));
+            var pigVendesReals = vendesReals.Sum(venda => venda.pigVenda4Test(true, true, false));
             var pigEnCartera = Enumerable.Sum(sessio.Productes, producte => producte.pigEnCartera4Test(true, true));
-         
+
+            decimal pigCompres = 0;
+            foreach (Moviment compra in compresTotes)
+            {
+                var dd = compra.pigCompra4Test(true, true, true);
+                var dd1 = compra.pigCompra4Test(true, true, false);
+                var dd2 = compra.pigCompra4Test(true, false, true);
+                var dd3 = compra.pigCompra4Test(true, false, false);
+                pigCompres += dd;
+            }
+
+
             var xx = pig.ToString("#,###.##");
             var yy = (pigEnCartera + pigVendesReals).ToString("#,###.##");
+            var zz = pigCompres.ToString("#,###.##");
+        }
+
+        private void comprovaCompra(Moviment compra)
+        {
+            var ratiCompraOrigCompra = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig) / compra.Participacions;
+            
+            var xx = compra.DesglosCompres.Sum(s => s.Participacions);
+            Assert.AreEqual((double)compra.Participacions, (double)xx, .001);
+            
+            xx = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig);
+            Assert.AreEqual((double) (compra.Participacions * ratiCompraOrigCompra), (double)xx, .001);
+
+
+            decimal partsEnCartera;
+            List<DesglosCompraExt> desglosCompraTot;
+            var vendesCompra = compra.Prod.vendesDeCompra4Test(compra, false, out partsEnCartera, out desglosCompraTot);
+
+            foreach (var vendaExt in vendesCompra)
+            {
+                var comp = vendaExt._Venda.RefTraspas;
+
+                if(comp != null)
+                    comprovaCompra(comp);
+            }
         }
 
 
@@ -130,6 +175,44 @@ namespace UnitTestInversions
             Assert.AreEqual((double)pigNoOrigAmbDespeses, 613, .01);
         }
 
+
+        [TestMethod]
+        public void PigProd13()
+        {
+            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
+
+            var prod = sessio.ProdFons.Single(s => s.Id == 13);
+
+            var compra = prod.MovimentsProducteUsuari.Single(s => s.Id == 34);
+            var venda = prod.MovimentsProducteUsuari.Single(s => s.Id == 42);
+
+            var pigOrig = compra.pigCompra4Test(false, true, false);
+            Assert.AreEqual((double)pigOrig, -283.135, .01);
+
+            var pig = compra.pigCompra4Test(false, false, false);
+            Assert.AreEqual((double)pig, -659.436, .01);
+
+            var pigVendaOrig = venda.pigVenda4Test(true, false, false);
+            Assert.AreEqual((double)pigVendaOrig, -283.135, .01);
+
+            var pigVenda = venda.pigVenda4Test(false, false, false);
+            Assert.AreEqual((double)pigVenda, -659.436, .01);
+        }
+
+        [TestMethod]
+        public void PigProd16()
+        {
+            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
+
+            var compra = sessio.Moviments.Single(s => s.Id == 101);
+            
+            var pigOrig = compra.pigCompra4Test(true, true, false);
+            Assert.AreEqual((double)pigOrig, 434.492, .01);
+
+            var pig = compra.pigCompra4Test(true, false, false);
+            Assert.AreEqual((double)pig, 19653.451, .01); 
+        }
+
         #region ***** Producte 27 *****
        
         [TestMethod]
@@ -198,8 +281,7 @@ namespace UnitTestInversions
             var prod = sessio.ProdFons.Single(s => s.Id == 27);
 
             // Poso el valor actuar de la participacio a 46,53 €
-            var valoracio = sessio.Valoracio.ToList().Where(val => val.Prod == prod).OrderBy(val => val.Data).Last();
-            valoracio.PreuParticipacio = 46.53m;
+            ModificacioTemporalValoracioActual(sessio, prod, 46.53m);
 
             var pigOrigAmbCartera = prod.pigEnCartera4Test(true, true);
             var pigOrigAmbCartera2 = prod.pigHistoric4Test(true, true, DateTime.Now);
@@ -339,8 +421,8 @@ namespace UnitTestInversions
 
             ModificacioTemporalValoracioActual(sessio, compra.Prod, 460.150m);
 
-            //var pigOrigAmbCartera = compra.pigCompra4Test(true, true, true, true);
-            //Assert.AreEqual((double)pigOrigAmbCartera, 845.6485, .01);
+            var pigOrigAmbCartera = compra.pigCompra4Test(true, true, true);
+            Assert.AreEqual((double)pigOrigAmbCartera, 845.651, .01);
 
             var pigOrig = compra.pigCompra4Test(true, true, false);
             Assert.AreEqual((double)pigOrig, 0, .01);
