@@ -16,70 +16,57 @@ namespace UnitTestInversions
         public void PigTotal()
         {
             InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
-            
+
             var movUsuari = sessio.Moviments.Where(mov => mov.UsuariId == Usuari.Seleccionat.Id).ToList();
+            var prods = Producte.Tuples.ToList();
+            prods = prods.Where(prod => prod is ProdFons).ToList();
+            //prods = prods.Where(prod => prod is ProdAccions).ToList();
+
+            movUsuari = movUsuari.Where(mov => prods.Contains(mov.Prod)).ToList();
 
             var compresTotes = movUsuari.Where(mov => mov._EsCompra).ToList();
             var compresReals = movUsuari.Where(mov => mov._EsCompraReal).ToList();
             var vendesReals = movUsuari.Where(mov => mov._EsVendaReal).ToList();
 
-
-            //foreach (var compra in compresReals)
+            //Debug.WriteLine("Prod\tId\tPiG");
+            //foreach (var vendaReal in vendesReals.OrderBy(o => o.Prod))
             //{
-            //    comprovaCompra(compra);
+            //    Debug.WriteLine("{0}\t{1}\t{2}", vendaReal.Prod, vendaReal.Id, vendaReal.pigVenda4Test(true, false, false).ToString("#,###.000"));
+            //}
+            //Debug.WriteLine("{0}\t{1}\t{2}", "Cartera", "", prods.Sum(producte => producte.pigEnCartera4Test(true, true)).ToString("#,###.000"));
+
+            //Debug.WriteLine("Prod\tId\tPig Orig\tPiG");
+            //foreach (Moviment compra in compresTotes)
+            //{
+            //    var aa = compra.pigCompra4Test(false, true, true);
+            //    var bb = compra.pigCompra4Test(false, false, true);
+            //    Debug.WriteLine("{3}\t{0}\t{1}\t{2}", compra.Id, aa, bb, compra.Prod);
             //}
 
             var totalCompres = compresReals.Sum(compra => compra.Participacions * compra.PreuParticipacio);
-            var totalVendes = vendesReals.Sum(venda => venda.Participacions * venda.PreuParticipacio);
-            var totalDespeses = movUsuari.Sum(mov => mov.Despeses.GetValueOrDefault());
+            var totalVendes = vendesReals.Sum(venda => venda.Participacions * venda.PreuParticipacio);          
+            // No conto despeses per que alguns fons en tenen i és un merder.
+            var totalDespeses = 0; // movUsuari.Sum(mov => mov.Despeses.GetValueOrDefault());
+            var totalEnCartera = prods.Sum(prod=>prod.partsEnCarteraTest() * prod._PreuParticipacioActual);
+
+            var pigTotal = totalEnCartera + totalVendes - totalCompres - totalDespeses;
+
+            var pigVendesReals = vendesReals.Sum(venda => venda.pigVenda4Test(true, false, false));
+            var pigEnCartera = prods.Sum(producte => producte.pigEnCartera4Test(true, false));
             
-            var totalEnCartera = Enumerable.Sum(sessio.Productes, producte => producte.partsEnCarteraTest() * producte._PreuParticipacioActual);
+            var pigVendesCart = pigVendesReals + pigEnCartera;
 
-            decimal pig = (totalEnCartera + totalVendes) - (totalCompres + totalDespeses);
+            Assert.AreEqual((double)pigTotal, (double)pigVendesCart, .03);
 
-            var pigVendesReals = vendesReals.Sum(venda => venda.pigVenda4Test(true, true, false));
-            var pigEnCartera = Enumerable.Sum(sessio.Productes, producte => producte.pigEnCartera4Test(true, true));
+            decimal pigCompres = compresTotes.Sum(compra => compra.pigCompra4Test(false, false, true));
+            decimal pigCompresOrig = compresTotes.Sum(compra => compra.pigCompra4Test(false, true, true));
 
-            decimal pigCompres = 0;
-            foreach (Moviment compra in compresTotes)
-            {
-                var dd = compra.pigCompra4Test(true, true, true);
-                var dd1 = compra.pigCompra4Test(true, true, false);
-                var dd2 = compra.pigCompra4Test(true, false, true);
-                var dd3 = compra.pigCompra4Test(true, false, false);
-                pigCompres += dd;
-            }
-
-
-            var xx = pig.ToString("#,###.##");
-            var yy = (pigEnCartera + pigVendesReals).ToString("#,###.##");
-            var zz = pigCompres.ToString("#,###.##");
+            var pigTotalX = pigTotal.ToString("#,###.000");
+            var pigVendesCartX = pigVendesCart.ToString("#,###.000");
+            var pigCompresX = pigCompres.ToString("#,###.000");
+            var pigCompresOrigX = pigCompresOrig.ToString("#,###.000");
         }
-
-        private void comprovaCompra(Moviment compra)
-        {
-            var ratiCompraOrigCompra = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig) / compra.Participacions;
-            
-            var xx = compra.DesglosCompres.Sum(s => s.Participacions);
-            Assert.AreEqual((double)compra.Participacions, (double)xx, .001);
-            
-            xx = compra.DesglosCompres.Sum(s => s.ParticipacionsOrig);
-            Assert.AreEqual((double) (compra.Participacions * ratiCompraOrigCompra), (double)xx, .001);
-
-
-            decimal partsEnCartera;
-            List<DesglosCompraExt> desglosCompraTot;
-            var vendesCompra = compra.Prod.vendesDeCompra4Test(compra, false, out partsEnCartera, out desglosCompraTot);
-
-            foreach (var vendaExt in vendesCompra)
-            {
-                var comp = vendaExt._Venda.RefTraspas;
-
-                if(comp != null)
-                    comprovaCompra(comp);
-            }
-        }
-
+       
 
         [TestMethod]
         public void PigTotesLesVendes()
