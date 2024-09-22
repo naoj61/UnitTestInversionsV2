@@ -86,7 +86,7 @@ namespace UnitTestInversions
                 for (int any = 2010; any < 2021; any++)
                 {
                     var pig = 0; // prod.pig3TotalTest((uint)any, true, false);
-                    var pig2 = prod.pig2TotalTest(new DateTime(any, 1, 1), new DateTime(any, 12, 31), any == DateTime.Today.Year, false);
+                    var pig2 = prod.pig2Total4Test(new DateTime(any, 1, 1), new DateTime(any, 12, 31), any == DateTime.Today.Year, false);
                     tPig += pig;
                     tPig2 += pig2;
                     if (!Utilitats.EsZero(pig) || !Utilitats.EsZero(pig2))
@@ -99,7 +99,7 @@ namespace UnitTestInversions
                     }
                 }
                 
-                var xxx = prod.pig2ProducteTest();
+                var xxx = prod.pig2Producte4Test();
 
                 if (imprimeixTotal)
                 {
@@ -135,9 +135,10 @@ namespace UnitTestInversions
                 if (!prod.MovimentsProducteUsuari.Any())
                     continue;
 
-                var pTot = prod.pig2TotalTest(dataHoraFinal: data);
-                var pProd = prod.pig2ProducteTest(dataHoraFinal: data);
-                var pCar = prod.pig2EnCarteraTest(dataHoraFinal: data);
+                var pTot = prod.pig2Total4Test(dataHoraFinal: data);
+                var pProd = prod.pig2Producte4Test(dataHoraFinal: data);
+                //var pCar = prod.pig2EnCarteraTest(dataHoraFinal: data);
+                var pCar = prod.pigEnCartera4Test(true, true, dataHora: data);
 
                 pig2Total += pTot;
                 pig2Producte += pProd;
@@ -219,7 +220,7 @@ namespace UnitTestInversions
                     Debug.WriteLine("Producte: {0}. Valor actual en cartera: {1}", prod._NomProducte, prod._ValorActualEnCartera.ToString("C2"));
                     importTotalCarteraActual += prod._ValorActualEnCartera;
                 }
-                pigtotal2 += prod.pig2TotalTest();
+                pigtotal2 += prod.pig2Total4Test();
             }
 
             piGActual = importTotalVendesReals + importTotalCarteraActual + importTotalDividends - importTotalCompresReals;

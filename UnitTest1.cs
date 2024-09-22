@@ -480,8 +480,8 @@ namespace UnitTestInversions
             var prodAsia = sessio.ProdFons.Single(s => s.Id == 3);
             var pigAsia2013 = prodAsia.pigEnAny4Test(2013, false, false);
             var pigAsia2020 = prodAsia.pigEnAny4Test(2020, false, false);
-            var pigAsia2013X = prodAsia.pig2TotalTest(new DateTime(2013, 1, 1), new DateTime(2013, 12, 31), false, false);
-            var pigAsia2020X = prodAsia.pig2TotalTest(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), false, false);
+            var pigAsia2013X = prodAsia.pig2Total4Test(new DateTime(2013, 1, 1), new DateTime(2013, 12, 31), false, false);
+            var pigAsia2020X = prodAsia.pig2Total4Test(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), false, false);
 
 
             Debug.WriteLine("pigAsia2013={0}", pigAsia2013);
@@ -880,11 +880,11 @@ namespace UnitTestInversions
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
 
-            var pigAcc = Producte.Pig2CarteraTest(Producte.TipusProducte.Accions, null, 2022, true, true);
-            var pigRF = Producte.Pig2CarteraTest(Producte.TipusProducte.Fons,  TipusFons.RF, 2022, true, true);
-            var pigRV = Producte.Pig2CarteraTest(Producte.TipusProducte.Fons,  TipusFons.RV, 2022, true, true);
-            var pigFons = Producte.Pig2CarteraTest(Producte.TipusProducte.Fons,  TipusFons.Tots, 2022, true, true);
-            var pigTot = Producte.Pig2CarteraTest(Producte.TipusProducte.Tots,  null, 2022, true, true);
+            var pigAcc = Producte.Pig2Cartera4Test(Producte.TipusProducte.Accions, null, 2022, true, true);
+            var pigRF = Producte.Pig2Cartera4Test(Producte.TipusProducte.Fons,  TipusFons.RF, 2022, true, true);
+            var pigRV = Producte.Pig2Cartera4Test(Producte.TipusProducte.Fons,  TipusFons.RV, 2022, true, true);
+            var pigFons = Producte.Pig2Cartera4Test(Producte.TipusProducte.Fons,  TipusFons.Tots, 2022, true, true);
+            var pigTot = Producte.Pig2Cartera4Test(Producte.TipusProducte.Tots,  null, 2022, true, true);
 
             Assert.AreEqual((double)(pigRF + pigRV), (double)pigFons, 3);
             Assert.AreEqual((double)(pigRF + pigRV + pigAcc), (double)pigTot, 3);

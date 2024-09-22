@@ -22,6 +22,25 @@ namespace UnitTestInversions
         #region *** Test ***
 
         /// <summary>
+        /// He comprovat que poden desquadrar al fer la compra. Fins i tot en compres d'accions que no hi ha desgloç.
+        /// </summary>
+        [TestMethod]
+        public void ComprovaPartsCompresAmbPartsDesgloçCompres()
+        {
+            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
+
+            var compres = sessio.Moviments.Where(mov => mov.TipusMoviment == TipusMoviment.Compra).ToList();
+
+            foreach (var compra in compres)
+            {
+                var partsDesg = compra.DesglosCompres.Sum(desg => desg.Participacions);
+                Assert.AreEqual(compra.Participacions, partsDesg);
+            }
+        }
+
+
+
+        /// <summary>
         /// Comprova que les compres reals de fons, coincideixen amb la cartera actual més les vendes reals
         /// </summary>
         //[TestMethod]

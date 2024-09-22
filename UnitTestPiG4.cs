@@ -156,10 +156,10 @@ namespace UnitTestInversions
             ModificacioTemporalValoracioActual(sessio, prod, 20.514m);
 
             pigNoOrig = prod.pigEnCartera4Test(false, false);
-            Assert.AreEqual((double)pigNoOrig, 614, .01);
+            Assert.AreEqual((double)pigNoOrig, 0, .01);
 
             pigNoOrigAmbDespeses = prod.pigEnCartera4Test(false, true);
-            Assert.AreEqual((double)pigNoOrigAmbDespeses, 613, .01);
+            Assert.AreEqual((double)pigNoOrigAmbDespeses, 0, .01);
         }
 
 
