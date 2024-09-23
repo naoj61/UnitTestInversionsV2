@@ -13,6 +13,24 @@ namespace UnitTestInversions
     public class UnitTestPiG4
     {
         [TestMethod]
+        public void ComprovaDividendsCompra()
+        {
+            InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
+
+            var compra = sessio.Moviments.Single(s => s.Id == 151); // Dividends=0
+            var div = compra.dividendsCompra4Test();
+            Assert.AreEqual(div, 0); 
+
+            compra = sessio.Moviments.Single(s => s.Id == 166); // Dividends=169,608 €
+            div = compra.dividendsCompra4Test();
+            Assert.AreEqual((double)div, 169.608, .001);
+
+            compra = sessio.Moviments.Single(s => s.Id == 174); // Dividends=124,712 €
+            div = compra.dividendsCompra4Test();
+            Assert.AreEqual((double)div, 124.712, .001);
+        }
+
+        [TestMethod]
         public void PigTotal()
         {
             InversionsBDContext sessio = UnitTest1.ConnectaBd(Usuari.Usuaris.Joan);
