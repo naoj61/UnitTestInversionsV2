@@ -28,6 +28,30 @@ namespace UnitTestInversions
             compra = sessio.Moviments.Single(s => s.Id == 174); // Dividends=124,712 €
             div = compra.dividendsCompra4Test();
             Assert.AreEqual((double)div, 124.712, .001);
+
+            compra = sessio.Moviments.Single(s => s.Id == 178); // Dividends=124,712 €
+            div = compra.dividendsCompra4Test();
+            Assert.AreEqual((double)div, 0, .001);
+
+            compra = sessio.Moviments.Single(s => s.Id == 191); // Dividends=124,712 €
+            div = compra.dividendsCompra4Test();
+            Assert.AreEqual((double)div, 75.731, .001);
+
+            compra = sessio.Moviments.Single(s => s.Id == 190); // Dividends=124,712 €
+            div = compra.dividendsCompra4Test();
+            Assert.AreEqual((double)div, 22.621, .001);
+
+            compra = sessio.Moviments.Single(s => s.Id == 193); // Dividends=124,712 €
+            div = compra.dividendsCompra4Test();
+            Assert.AreEqual((double)div, 106.466, .001);
+
+            compra = sessio.Moviments.Single(s => s.Id == 192); // Dividends=124,712 €
+            div = compra.dividendsCompra4Test();
+            Assert.AreEqual((double)div, 122.939, .001);
+
+            compra = sessio.Moviments.Single(s => s.Id == 182); // Dividends=124,712 €
+            div = compra.dividendsCompra4Test();
+            Assert.AreEqual((double)div, 139.413, .001);
         }
 
         [TestMethod]
