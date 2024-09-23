@@ -284,42 +284,42 @@ namespace UnitTestInversions
 
             importSelf = 777.35M;
             prod = sessio.Productes.Single(s => s.Id == 5);
-            costOrigEnCart = prod.costOriginalEnCartera3Test();
+            costOrigEnCart = prod.costOriginalEnCartera4Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000",CultureInfo.CurrentCulture), prod);
 
             importSelf = 6132.72M;
             prod = sessio.Productes.Single(s => s.Id == 6);
-            costOrigEnCart = prod.costOriginalEnCartera3Test();
+            costOrigEnCart = prod.costOriginalEnCartera4Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
 
             importSelf = 17922.04M;
             prod = sessio.Productes.Single(s => s.Id == 16);
-            costOrigEnCart = prod.costOriginalEnCartera3Test();
+            costOrigEnCart = prod.costOriginalEnCartera4Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
 
             importSelf = 1588.63M;
             prod = sessio.Productes.Single(s => s.Id == 19);
-            costOrigEnCart = prod.costOriginalEnCartera3Test();
+            costOrigEnCart = prod.costOriginalEnCartera4Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
 
             importSelf = 27338.26M;
             prod = sessio.Productes.Single(s => s.Id == 27);
-            costOrigEnCart = prod.costOriginalEnCartera3Test();
+            costOrigEnCart = prod.costOriginalEnCartera4Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
 
             importSelf = 26084.35M;
             prod = sessio.Productes.Single(s => s.Id == 7);
-            costOrigEnCart = prod.costOriginalEnCartera3Test();
+            costOrigEnCart = prod.costOriginalEnCartera4Test();
             total += costOrigEnCart;
             //Assert.AreEqual(importSelf, costOrigEnCart, .0001);
             Debug.WriteLine("{3}\t{0}\t{1}\t{2}", importSelf.ToString("####.000", CultureInfo.CurrentCulture), costOrigEnCart.ToString("####.000", CultureInfo.CurrentCulture), (importSelf - costOrigEnCart).ToString("####.000", CultureInfo.CurrentCulture), prod);
