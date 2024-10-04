@@ -337,7 +337,7 @@ namespace UnitTestInversions
         public void CompresDeLaVenda1278Orig()
         {
             InversionsBDContext sessio = ConnectaBd(Usuari.Usuaris.Joan);
-           
+
             var prod28 = sessio.Productes.Single(w => w.Id == 27);
 
             bool pigOrig = true;
@@ -352,7 +352,7 @@ namespace UnitTestInversions
             //decimal partsEnCartera4;
             //var vend4 = prod28.vendesDePartipacionsOrig4(sessio.Moviments.Single(s => s.Id == 203), pigOrig, out partsEnCartera3).ToList();
 
-            
+
             var data = DateTime.Now;
             //var data = new DateTime(2021, 12, 31);
 
@@ -370,136 +370,13 @@ namespace UnitTestInversions
             var prod27 = sessio.Productes.Single(w => w.Id == 27);
             var pig27 = prod27.pigEnCartera4Test(false, true);
             var pigOrig27 = prod27.pigEnCartera4Test(true, true); // 14.724,18€ 30/08/2024
-            var pigH27 = pig27 +prod27.pigHistoric4Test(false, true, data);
+            var pigH27 = pig27 + prod27.pigHistoric4Test(false, true, data);
             var pigHOrig27 = pigOrig27 + prod27.pigHistoric4Test(true, true, data);
 
             Debug.WriteLine("\npigOrig27:\t" + pigOrig27.ToString("#,##0.00"));
             Debug.WriteLine("pigH27:\t" + pigH27.ToString("#,##0.00"));
             Debug.WriteLine("pig27:\t" + pig27.ToString("#,##0.00"));
             Debug.WriteLine("pigHOrig27:\t" + pigHOrig27.ToString("#,##0.00"));
-
-            return;
-
-            //var compra1286 = sessio.Moviments.Single(w => w.Id == 1286);
-            //var pig1286 = compra1286.Prod.pigCompraTest(compra1286, true);
-
-            //var compra1287 = sessio.Moviments.Single(w => w.Id == 1287);
-            //var pig1287 = compra1287.Prod.pigCompraTest(compra1287, true);
-
-            var venda1285 = sessio.Moviments.Single(w => w.Id == 1285);
-            decimal desp1285;
-            var pig1285 = venda1285.pigVenda4Test(true, true);
-
-
-
-            var venda4 = sessio.Moviments.Single(w => w.Id == 4);
-            var venda5 = sessio.Moviments.Single(w => w.Id == 5);
-            var venda6 = sessio.Moviments.Single(w => w.Id == 6);
-
-
-            var venda187 = sessio.Moviments.Single(w => w.Id == 187);
-            var venda1278 = sessio.Moviments.Single(w => w.Id == 1278);
-            var venda1251 = sessio.Moviments.Single(w => w.Id == 1251);
-
-            var c187 = venda187.Prod.compresDePartipacionsEnData4Test(venda187.Data, venda187.Participacions);
-            var c1278 = venda1278.Prod.compresDePartipacionsEnData4Test(venda1278.Data, venda1278.Participacions);
-            var c1251 = venda1251.Prod.compresDePartipacionsEnData4Test(venda1251.Data, venda1251.Participacions);
-            var dc187 = venda187.Prod.desglosCompresDeParticipacionsEnData4Test(venda187.Data, venda187.Participacions).ToList();
-            var dc1278 = venda1278.Prod.desglosCompresDeParticipacionsEnData4Test(venda1278.Data, venda1278.Participacions).ToList();
-            var dc1251 = venda1251.Prod.desglosCompresDeParticipacionsEnData4Test(venda1251.Data, venda1251.Participacions).ToList();
-
-            decimal pig187 = 0;
-            foreach (DesglosCompraExt desglosCompraExt in dc187)
-            {
-                pig187 += desglosCompraExt._PartsUtilitzadesOrig * desglosCompraExt._PreuParticipacioOrig;
-            }
-            pig187 = venda187._ImportBrut - pig187;
-
-
-            decimal pig1278 = 0;
-            foreach (DesglosCompraExt desglosCompraExt in dc1278)
-            {
-                pig1278 += desglosCompraExt._PartsUtilitzadesOrig * desglosCompraExt._PreuParticipacioOrig;
-            }
-            pig1278 = venda1278._ImportBrut - pig1278;
-
-
-            decimal pig1251 = 0;
-            foreach (DesglosCompraExt desglosCompraExt in dc1251)
-            {
-                pig1251 += desglosCompraExt._PartsUtilitzadesOrig * desglosCompraExt._PreuParticipacioOrig;
-            }
-            pig1251 = venda1251._ImportBrut - pig1251;
-
-            var pig187_2 = venda187.pigVenda4Test(true, true);
-            var pig1278_2 = venda1278.pigVenda4Test(true, true);
-            var pig1251_2 = venda1251.pigVenda4Test(true, true);
-
-            var pig187_3 = venda187.pigVendaTest(false);
-            var pig1278_3 = venda1278.pigVendaTest(false);
-            var pig1251_3 = venda1251.pigVendaTest(false);
-
-
-            Debug.WriteLine("pig187 = " + pig187.ToString("#,##0.00"));
-            Debug.WriteLine("pig187_2 = " + pig187_2.ToString("#,##0.00"));
-            Debug.WriteLine("pig187_3 = " + pig187_3.ToString("#,##0.00"));
-
-            Debug.WriteLine("\npig1278 = " + pig1278.ToString("#,##0.00"));
-            Debug.WriteLine("pig1278_2 = " + pig1278_2.ToString("#,##0.00"));
-            Debug.WriteLine("pig1278_3 = " + pig1278_3.ToString("#,##0.00"));
-
-            Debug.WriteLine("\npig1251 = " + pig1251.ToString("#,##0.00"));
-            Debug.WriteLine("pig1251_2 = " + pig1251_2.ToString("#,##0.00"));
-            Debug.WriteLine("pig1251_3 = " + pig1251_3.ToString("#,##0.00"));
-
-
-            // return;
-
-            if (false)
-            {
-                var pigVenda = venda1278.pigVendaTest(true);
-                var pigVendaR = venda1278.PiGVendaReal;
-                Assert.AreEqual(pigVenda, pigVendaR, "Error venda1278");
-
-                pigVenda = venda4.pigVendaTest(true);
-                pigVendaR = venda4.PiGVendaReal;
-                Assert.AreEqual(pigVenda, pigVendaR, "Error venda4");
-
-                pigVenda = venda5.pigVendaTest(true);
-                pigVendaR = venda5.PiGVendaReal;
-                Assert.AreEqual(pigVenda, pigVendaR, "Error venda5");
-
-                pigVenda = venda6.pigVendaTest(true);
-                pigVendaR = venda6.PiGVendaReal;
-                Assert.AreEqual(pigVenda, pigVendaR, "Error venda6");
-
-                return; 
-            }
-
-
-            var prodAsia = sessio.ProdFons.Single(s => s.Id == 3);
-            var pigAsia2013 = prodAsia.pigEnAny4Test(2013, false, false);
-            var pigAsia2020 = prodAsia.pigEnAny4Test(2020, false, false);
-            var pigAsia2013X = prodAsia.pigEntreDates4Test(new DateTime(2013, 1, 1), new DateTime(2013, 12, 31), false, false);
-            var pigAsia2020X = prodAsia.pigEntreDates4Test(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), false, false);
-
-
-            Debug.WriteLine("pigAsia2013={0}", pigAsia2013);
-            Debug.WriteLine("pigAsia2020={0}", pigAsia2020);
-
-            var xx1 = venda4.compresDeLaVendaTest();
-            decimal costCompra4 = xx1.Sum(compraExt => compraExt._PartsUtilitzades * compraExt._PreuParticipacio);
-            var pig4A = venda4._ImportBrut - costCompra4;
-            //var pig4B = venda4.pi
-
-            var xx2 = venda5.compresDeLaVendaTest();
-            decimal costCompra5 = xx2.Sum(compraExt => compraExt._PartsUtilitzades * compraExt._PreuParticipacio);
-
-            var xx3 = venda6.compresDeLaVendaTest();
-            decimal costCompra6 = xx3.Sum(compraExt => compraExt._PartsUtilitzades * compraExt._PreuParticipacio);
-
-            Debug.WriteLine("pig={0}", (venda4._ImportBrut + venda5._ImportBrut + venda6._ImportBrut) - (costCompra4 + costCompra5 + costCompra6));
-
         }
 
         [TestMethod]
@@ -726,7 +603,7 @@ namespace UnitTestInversions
 
                 foreach (var venda in vendes)
                 {
-                    pig += venda.pigVendaTest(true);
+                    pig += venda.pigVenda4Test(true, true, true);
                 }
 
                 var dividents = Moviment.MovimentsUsuari.Where(w => w._EsDividents && w.Data.Year == any).Sum(s => s._ImportBrut);
