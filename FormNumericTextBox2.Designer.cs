@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.ntb1 = new Controls.NumericTextBox2();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -39,9 +40,14 @@
             this.button3 = new System.Windows.Forms.Button();
             this.tb1 = new System.Windows.Forms.TextBox();
             this.button4 = new System.Windows.Forms.Button();
+            this.dataGridView31 = new Controls.DataGridView3();
+            this.Text = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Num = new Controls.NumericTextBoxColumn2();
+            this.Num2 = new Controls.NumericTextBoxColumn2();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView31)).BeginInit();
             this.SuspendLayout();
             // 
             // ntb1
@@ -51,6 +57,7 @@
             this.ntb1._NegatiusEnVermell = true;
             this.ntb1._PermetDecimals = true;
             this.ntb1._PermetNegatius = true;
+            this.ntb1._PermetTextNull = false;
             this.ntb1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ntb1.ForeColor = System.Drawing.Color.Black;
             this.ntb1.Location = new System.Drawing.Point(3, 22);
@@ -92,6 +99,7 @@
             this.ntb3._NegatiusEnVermell = false;
             this.ntb3._PermetDecimals = true;
             this.ntb3._PermetNegatius = false;
+            this.ntb3._PermetTextNull = false;
             this.ntb3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ntb3.ForeColor = System.Drawing.Color.Black;
             this.ntb3.Location = new System.Drawing.Point(3, 22);
@@ -123,6 +131,7 @@
             this.ntb2._NegatiusEnVermell = false;
             this.ntb2._PermetDecimals = true;
             this.ntb2._PermetNegatius = true;
+            this.ntb2._PermetTextNull = false;
             this.ntb2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ntb2.ForeColor = System.Drawing.Color.Black;
             this.ntb2.Location = new System.Drawing.Point(3, 22);
@@ -185,11 +194,45 @@
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
-            // UnitTestForm
+            // dataGridView31
+            // 
+            this.dataGridView31.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView31.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Text,
+            this.Num,
+            this.Num2});
+            this.dataGridView31.Location = new System.Drawing.Point(49, 259);
+            this.dataGridView31.Name = "dataGridView31";
+            this.dataGridView31.RowTemplate.Height = 28;
+            this.dataGridView31.Size = new System.Drawing.Size(339, 177);
+            this.dataGridView31.TabIndex = 5;
+            // 
+            // Text
+            // 
+            this.Text.HeaderText = "Text";
+            this.Text.Name = "Text";
+            this.Text.ToolTipText = "qwe";
+            // 
+            // Num
+            // 
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle1.Format = "C2";
+            dataGridViewCellStyle1.NullValue = null;
+            this.Num.DefaultCellStyle = dataGridViewCellStyle1;
+            this.Num.HeaderText = "Num";
+            this.Num.Name = "Num";
+            // 
+            // Num2
+            // 
+            this.Num2.HeaderText = "Num2";
+            this.Num2.Name = "Num2";
+            // 
+            // FormNumericTextBox2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(700, 322);
+            this.ClientSize = new System.Drawing.Size(781, 498);
+            this.Controls.Add(this.dataGridView31);
             this.Controls.Add(this.tb1);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
@@ -198,14 +241,14 @@
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox1);
-            this.Name = "UnitTestForm";
-            this.Text = "UnitTestForm";
+            this.Name = "FormNumericTextBox2";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView31)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -224,5 +267,9 @@
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.TextBox tb1;
         private System.Windows.Forms.Button button4;
+        private Controls.DataGridView3 dataGridView31;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Text;
+        private Controls.NumericTextBoxColumn2 Num;
+        private Controls.NumericTextBoxColumn2 Num2;
     }
 }

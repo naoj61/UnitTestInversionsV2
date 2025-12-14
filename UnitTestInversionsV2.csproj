@@ -66,6 +66,9 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="FormDataGridViewColumnDemo.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="UnitTestPiG4.cs" />
     <Compile Include="UnitTest1Assert.cs" />
     <Compile Include="FormNumericTextBox2.cs">
