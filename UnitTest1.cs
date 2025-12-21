@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Comuns;
+using Inversions.ClassesEntity;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Inversions;
 using Microsoft.Win32;

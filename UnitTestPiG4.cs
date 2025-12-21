@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using Inversions.ClassesEntity;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Inversions;
 
