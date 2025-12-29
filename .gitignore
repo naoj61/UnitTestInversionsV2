@@ -36,5 +36,3 @@ TestResults/
 
 # Roslyn i altres eines de compilació modernes
 .target/
-
-app.config/
