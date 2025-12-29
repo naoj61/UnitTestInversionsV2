@@ -1,0 +1,40 @@
+﻿## --- REGLES DEL TEU HGIGNORE ---
+# Carpetes de compilació
+Inversions/bin/
+Inversions/obj/
+bin/
+obj/
+
+# Bases de dades i backups
+BD/
+BD2/
+*.orig
+
+# Paquets i configuració d'usuari
+packages/
+*.suo
+*.DotSettings.user
+
+# Arxius temporals de sistema i Office
+Thumbs.db
+~$*
+Docs/PiG Modificacions.xlsx
+
+## --- EXTRAS IMPRESCINDIBLES PER A VS 2026 ---
+# Carpeta de configuració de Visual Studio (molt important!)
+.vs/
+
+# Fitxers de diagnòstic i resultats de tests
+TestResults/
+*.log
+*.cache
+
+# Fitxers de subministrament de dades de l'usuari (User Specific)
+*.user
+*.userosscache
+*.sln.docstates
+
+# Roslyn i altres eines de compilació modernes
+.target/
+
+app.config/
