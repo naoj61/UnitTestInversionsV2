@@ -36,3 +36,8 @@ TestResults/
 
 # Roslyn i altres eines de compilació modernes
 .target/
+
+# Fitxers pujats amb extensió .Template
+/UnitTestInversionsV2.csproj
+/App.config
+/packages.config
