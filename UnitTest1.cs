@@ -16,6 +16,7 @@ using Inversions.ClassesEntity;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Inversions;
 using Microsoft.Win32;
+using System.Threading.Tasks;
 
 namespace UnitTestInversions
 {
@@ -333,6 +334,22 @@ namespace UnitTestInversions
 
 
         #region *** Test ***
+
+        [TestMethod]
+        public async Task AccesCotitzacionsViaApi()
+        {
+            try
+            {
+                //var result = await EodhdUserService.GetLastCloseFromIsinAsync("EURUSD.FOREX", false);
+                var result = await EodhdUserService.GetLastCloseFromIsinAsync("LU1235294995", true);
+                result = await EodhdUserService.GetLastCloseFromIsinAsync("LU1235294995", true);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
 
         [TestMethod]
         public void CompresDeLaVenda1278Orig()
@@ -1253,5 +1270,6 @@ namespace UnitTestInversions
         }
 
         #endregion *** Mètodes ***
+    
     }
 }
