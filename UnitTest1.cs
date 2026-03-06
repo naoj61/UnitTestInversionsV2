@@ -336,17 +336,151 @@ namespace UnitTestInversions
         #region *** Test ***
 
         [TestMethod]
+        public async Task TrobaTickersAEoddh()
+        {
+            try
+            {
+                // var estatEodHd = await EodhdUserService.EstatEodHd();
+
+                /* 
+                   Nova meu:	  US6701002056 --> En USD. S'ha de convertir.
+                   Nova mama:	  DK0062498333 --> En DKK. S'ha de convertir.
+                   Clarus:		  US18270P1093 --> En USD. S'ha de convertir.
+                   MasterCard:	  M4I --> No s'ha de convertir.
+                   BerkShire:	  BRYN --> No s'ha de convertir.
+                   S&P 500:	  QDVE --> No s'ha de convertir.
+                   DWS Invest:	  LU1965927921
+                   Euro Fund:	  LU0090865873
+                   Global Tech:  LU1235294995
+                   DWS Floating: LU0034353002
+                */
+
+
+                Debug.WriteLine("----- Eodhd -----");
+
+                var novaMeu = await EodhdUserService.GetTicker("US6701002056");
+                Debug.WriteLine($"NovaMeu:\t{novaMeu}");
+
+                var novaMama = await EodhdUserService.GetTicker("DK0062498333");
+                Debug.WriteLine($"NovaMama:\t{novaMama}");
+
+                var clarus = await EodhdUserService.GetTicker("US18270P1093");
+                Debug.WriteLine($"Clarus:\t{clarus}");
+
+                var mastercard2 = await EodhdUserService.GetTicker("M4I");
+                Debug.WriteLine($"Mastercard:\t{mastercard2}");
+
+                var berkshire2 = await EodhdUserService.GetTicker("BRYN");
+                Debug.WriteLine($"Berkshire:\t{berkshire2}");
+
+                var sp5002 = await EodhdUserService.GetTicker("QDVE");
+                Debug.WriteLine($"S&P 500:\t{sp5002}");
+
+                var dwsInvest = await EodhdUserService.GetTicker("LU1965927921");
+                Debug.WriteLine($"DwsInvest:\t{dwsInvest}");
+
+
+                var euroFund = await EodhdUserService.GetTicker("LU0090865873");
+                Debug.WriteLine($"EuroFund:\t{euroFund}");
+
+                var globalTech = await EodhdUserService.GetTicker("LU1235294995");
+                Debug.WriteLine($"GlobalTech:\t{globalTech}");
+
+                var dwsFloating = await EodhdUserService.GetTicker("LU0034353002");
+                Debug.WriteLine($"DwsFloating:\t{dwsFloating}");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        [TestMethod]
         public async Task AccesCotitzacionsViaApi()
         {
             try
             {
-                //var result = await EodhdUserService.GetLastCloseFromIsinAsync("EURUSD.FOREX", false);
-                var result = await EodhdUserService.GetLastCloseFromIsinAsync("LU1235294995", true);
-                result = await EodhdUserService.GetLastCloseFromIsinAsync("LU1235294995", true);
+                /*
+                    EUREUR.FOREX            
+                    EURDKK.FOREX
+                    EURUSD.FOREX
+
+                    NovaMeu:	NVO.US
+                    NovaMama:	NOVO-B.CO
+                    Clarus:	    CLAR.US
+                    Mastercard:	M4I.MU
+                    Berkshire:	BRYN.XETRA
+                    S&P 500:	QDVE.XETRA
+                    DwsInvest:	LU1965927921.EUFUND
+                    EuroFund:	LU0090865873.EUFUND
+                    GlobalTech:	LU1235294995.EUFUND
+                    DwsFloating:LU0034353002.EUFUND
+                */
+
+                //var EUR = await EodhdUserService.GetLastCloseFromIsinAsync("EUREUR.FOREX", false);
+
+                Debug.WriteLine("----- Eodhd -----");
+
+                var USD = await EodhdUserService.GetLastCloseFromIsinAsync("EURUSD.FOREX");
+                Debug.WriteLine($"USD:\t{USD.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                var DKK = await EodhdUserService.GetLastCloseFromIsinAsync("EURDKK.FOREX");
+                Debug.WriteLine($"DKK:\t{DKK.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                
+                Debug.WriteLine("");
+
+                var novaMama = await EodhdUserService.GetLastCloseFromIsinAsync("NOVO-B.CO") / DKK;
+                Debug.WriteLine($"NovaMama:\t{novaMama.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+
+                var novaMeu = await EodhdUserService.GetLastCloseFromIsinAsync("NVO.US") / USD;
+                Debug.WriteLine($"NovaMeu:\t{novaMeu.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+
+                var clarus = await EodhdUserService.GetLastCloseFromIsinAsync("CLAR.US") / USD;
+                Debug.WriteLine($"Clarus:\t{clarus.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+
+                var mastercard2 = await EodhdUserService.GetLastCloseFromIsinAsync("M4I.MU");
+                Debug.WriteLine($"Mastercard:\t{mastercard2.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+
+                var berkshire2 = await EodhdUserService.GetLastCloseFromIsinAsync("BRYN.XETRA");
+                Debug.WriteLine($"Berkshire:\t{berkshire2.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+
+                var dwsInvest = await EodhdUserService.GetLastCloseFromIsinAsync("LU1965927921.EUFUND");
+                Debug.WriteLine($"DwsInvest:\t{dwsInvest.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+
+                var euroFund = await EodhdUserService.GetLastCloseFromIsinAsync("LU0090865873.EUFUND");
+                Debug.WriteLine($"EuroFund:\t{euroFund.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+
+                var globalTech = await EodhdUserService.GetLastCloseFromIsinAsync("LU1235294995.EUFUND") / USD;
+                Debug.WriteLine($"GlobalTech:\t{globalTech.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+
+                var dwsFloating = await EodhdUserService.GetLastCloseFromIsinAsync("LU0034353002.EUFUND");
+                Debug.WriteLine($"DwsFloating:\t{dwsFloating.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+
+                Debug.WriteLine("----------------------");
+                Debug.WriteLine($"{novaMama.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.Write($"\t\t{novaMeu.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.Write($"\t\t{clarus.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.Write($"\t\t{mastercard2.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.Write($"\t\t{berkshire2.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.Write($"\t\t{dwsInvest.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.Write($"\t\t{euroFund.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.Write($"\t\t{globalTech.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.Write($"\t\t{dwsFloating.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+
+                return;
+
+                /*
+                var mastercard = await EodhdUserService.GetLastCloseFromIsinAsync("US57636Q1040", false) / USD;
+                var berkshire = await EodhdUserService.GetLastCloseFromIsinAsync("US0846707026", false) / USD;
+                var sp500 = await EodhdUserService.GetLastCloseFromIsinAsync("IE00B3WJKG14", false) / USD;
+
+                var arcelor = await EodhdUserService.GetLastCloseFromIsinAsync("LU1598757687", false);
+                var btcUsd = await EodhdUserService.GetLastCloseFromIsinAsync("BTC-USD.CC", false);
+                var btcEur = await EodhdUserService.GetLastCloseFromIsinAsync("BTC-USD.CC", true);
+                */
             }
             catch (Exception ex)
             {
-                throw;
+                throw ex;
             }
         }
 
