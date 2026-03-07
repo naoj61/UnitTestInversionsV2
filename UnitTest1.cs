@@ -1,21 +1,23 @@
-﻿using System;
+﻿using Comuns;
+using Inversions;
+using Inversions.ClassesEntity;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Win32;
+using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Data.Entity.Core;
 using System.Data.Entity.Migrations;
+using System.Data.Entity.Validation;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
-using Comuns;
-using Inversions.ClassesEntity;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Inversions;
-using Microsoft.Win32;
 using System.Threading.Tasks;
 
 namespace UnitTestInversions
@@ -330,6 +332,90 @@ namespace UnitTestInversions
             Debug.WriteLine("\nFinal");
         }
 
+
+        [TestMethod]
+        public void InformaTickerExchange()
+        {
+            using (var conn = new InversionsBDContext())
+            {
+                using (var dbContextTransaction = conn.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        bool actualitza = false;
+                        var productes = conn.Productes.Where(w => w.TickerExchange == null).ToList();
+
+                        foreach (var prod in productes.OfType<ProdAccions>().Where(w=>w.Ticker != null))
+                        {
+                            try
+                            {
+                                var ticker = EodhdUserService.GetTicker(prod.Ticker).Result;
+                                if (ticker != null)
+                                {
+                                    prod.TickerExchange = ticker;
+                                    actualitza = true;
+                                }
+                            }
+                            catch (Exception ex) { }
+                        }
+
+                        foreach (var prod in productes.OfType<ProdFons>().Where(w=>w.ISIN != null))
+                        {
+                            if (prod.ISIN.StartsWith("LU")
+                                || prod.ISIN.StartsWith("FR")
+                                || prod.ISIN.StartsWith("ES"))
+                            {
+                                prod.TickerExchange = prod.ISIN + ".EUFUND";
+                                actualitza = true;
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    var ticker = EodhdUserService.GetTicker(prod.ISIN).Result;
+                                    if (ticker != null)
+                                    {
+                                        prod.TickerExchange = ticker;
+                                        actualitza = true;
+                                    }
+                                }
+                                catch (Exception ex) { }
+                            }
+                        }
+
+                        if (actualitza)
+                        {
+                            conn.SaveChanges();
+                            dbContextTransaction.Commit();
+                        }
+                    }
+                    catch (DbEntityValidationException ex)
+                    {
+                        var errors = new StringBuilder();
+
+                        foreach (var eve in ex.EntityValidationErrors)
+                        {
+                            errors.AppendLine($"Entitat: {eve.Entry.Entity.GetType().Name}, Estat: {eve.Entry.State}");
+
+                            foreach (var ve in eve.ValidationErrors)
+                            {
+                                errors.AppendLine($" - Propietat: {ve.PropertyName}, Error: {ve.ErrorMessage}");
+
+                                // Si vols veure el valor que causava l’error:
+                                var currentValue = eve.Entry.CurrentValues[ve.PropertyName];
+                                errors.AppendLine($"   Valor actual: {currentValue}");
+                            }
+                        }
+
+                        throw new Exception("Errors de validació:\n" + errors.ToString(), ex);
+                    }
+
+                }
+            }
+
+            Debug.WriteLine("\nFinal");
+        }
+
         #endregion *** Modifiquen dades ***
 
 
@@ -340,6 +426,20 @@ namespace UnitTestInversions
         {
             try
             {
+                /*
+                FR0010149161
+                CR0000000003
+                ES0155598032
+                DE0009769869
+                GB00B28CMR29
+                */
+                var t1 = await EodhdUserService.GetTicker("TEF");
+                var t2 = await EodhdUserService.GetTicker("CR0000000003");
+                var t3 = await EodhdUserService.GetTicker("ES0155598032");
+                var t4 = await EodhdUserService.GetTicker("DE0009769869");
+                var t5 = await EodhdUserService.GetTicker("GB00B28CMR29");
+                return;
+
                 // var estatEodHd = await EodhdUserService.EstatEodHd();
 
                 /* 
@@ -456,7 +556,7 @@ namespace UnitTestInversions
                 Debug.WriteLine($"DwsFloating:\t{dwsFloating.Value.ToString("C3", CultureInfo.CurrentCulture)}");
 
                 Debug.WriteLine("----------------------");
-                Debug.WriteLine($"{novaMama.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.Write($"{novaMama.Value.ToString("C3", CultureInfo.CurrentCulture)}");
                 Debug.Write($"\t\t{novaMeu.Value.ToString("C3", CultureInfo.CurrentCulture)}");
                 Debug.Write($"\t\t{clarus.Value.ToString("C3", CultureInfo.CurrentCulture)}");
                 Debug.Write($"\t\t{mastercard2.Value.ToString("C3", CultureInfo.CurrentCulture)}");
@@ -464,7 +564,8 @@ namespace UnitTestInversions
                 Debug.Write($"\t\t{dwsInvest.Value.ToString("C3", CultureInfo.CurrentCulture)}");
                 Debug.Write($"\t\t{euroFund.Value.ToString("C3", CultureInfo.CurrentCulture)}");
                 Debug.Write($"\t\t{globalTech.Value.ToString("C3", CultureInfo.CurrentCulture)}");
-                Debug.Write($"\t\t{dwsFloating.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.WriteLine($"\t\t{dwsFloating.Value.ToString("C3", CultureInfo.CurrentCulture)}");
+                Debug.WriteLine("----------------------");
 
                 return;
 
