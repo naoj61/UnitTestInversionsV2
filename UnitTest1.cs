@@ -349,7 +349,7 @@ namespace UnitTestInversions
                         {
                             try
                             {
-                                var ticker = EodhdUserService.GetTicker(prod.Ticker).Result;
+                                var ticker = EodhdUserService.TrobaTickerEODHd(prod.Ticker).Result;
                                 if (ticker != null)
                                 {
                                     prod.TickerExchange = ticker;
@@ -372,7 +372,7 @@ namespace UnitTestInversions
                             {
                                 try
                                 {
-                                    var ticker = EodhdUserService.GetTicker(prod.ISIN).Result;
+                                    var ticker = EodhdUserService.TrobaTickerEODHd(prod.ISIN).Result;
                                     if (ticker != null)
                                     {
                                         prod.TickerExchange = ticker;
@@ -421,6 +421,97 @@ namespace UnitTestInversions
 
         #region *** Test ***
 
+
+
+        [TestMethod]
+        public void ProvesFestiusTots()
+        {
+            try
+            {
+                int any = 2026;
+                string ciutat = "Barcelona";
+
+                var festiusLocals = FestiusCatalunya.Tots(any, ciutat).Result;
+                Debug.WriteLine($"--- Festius Tota a {ciutat} l'any {any} ---");
+                foreach (var f in festiusLocals)
+                {
+                    Debug.WriteLine($"{f.Data} - {f.Ambit} - {f.EsAutonomica}");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        [TestMethod]
+        public void ProvesFestiusCatalunya()
+        {
+            try
+            {
+                int any = 2026;
+                string ciutat = "Barcelona";
+
+                var festiusLocals = FestiusCatalunya.Locals(any, ciutat).Result;
+                Debug.WriteLine($"--- Festius Locals a {ciutat} l'any {any} ---");
+                foreach (var f in festiusLocals)
+                {
+                    Debug.WriteLine($"{f.data} - {f.ajuntament_o_nucli_municipal}");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        [TestMethod]
+        public void ProvesFestiusEstatalsAutonomics()
+        {
+            try
+            {
+                int any = 2026;
+
+                var festius = FestiusCatalunya.EstatalsAutonomics(any).Result;
+                Debug.WriteLine($"--- Festius a Catalunya l'any {any} ---");
+                foreach (var f in festius)
+                {
+                    string ambit = f.Counties == null ? "Estatal" : "Autonòmic";
+                    Debug.WriteLine($"{f.Data:dd/MM/yyyy} - {f.NomLocal} ({ambit}) - {f.Counties}");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        [TestMethod]
+        public void ProvesCalendarisBorsesFMP()
+        {
+            try
+            {
+                var holidays = FinancialModelingPrep.FestiusBorses("NYSE", 2026).Result;
+
+                Console.WriteLine("Festius del NYSE:");
+                Console.WriteLine("-------------------------------------------");
+
+                foreach (var h in holidays)
+                {
+                    Debug.WriteLine($"{h.Exchange} - {h.Data} - {h.Nom} - {h.EstaTancat} - {h.HoraTancament}");
+                }
+
+                //var festiusNasdaq = FinancialModelingPrep.FestiusBorses("NASDAQ", 2024).Result;
+                //var festiusDeutscheBoerse =  FinancialModelingPrep.FestiusBorses("DEUTSCHEBOERSE", 2024).Result;
+                //var festiusEuronext =  FinancialModelingPrep.FestiusBorses("EURONEXT", 2024).Result;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
         [TestMethod]
         public async Task TrobaTickersAEoddh()
         {
@@ -433,11 +524,11 @@ namespace UnitTestInversions
                 DE0009769869
                 GB00B28CMR29
                 */
-                var t1 = await EodhdUserService.GetTicker("TEF");
-                var t2 = await EodhdUserService.GetTicker("CR0000000003");
-                var t3 = await EodhdUserService.GetTicker("ES0155598032");
-                var t4 = await EodhdUserService.GetTicker("DE0009769869");
-                var t5 = await EodhdUserService.GetTicker("GB00B28CMR29");
+                var t1 = await EodhdUserService.TrobaTickerEODHd("TEF");
+                var t2 = await EodhdUserService.TrobaTickerEODHd("CR0000000003");
+                var t3 = await EodhdUserService.TrobaTickerEODHd("ES0155598032");
+                var t4 = await EodhdUserService.TrobaTickerEODHd("DE0009769869");
+                var t5 = await EodhdUserService.TrobaTickerEODHd("GB00B28CMR29");
                 return;
 
                 // var estatEodHd = await EodhdUserService.EstatEodHd();
@@ -458,35 +549,35 @@ namespace UnitTestInversions
 
                 Debug.WriteLine("----- Eodhd -----");
 
-                var novaMeu = await EodhdUserService.GetTicker("US6701002056");
+                var novaMeu = await EodhdUserService.TrobaTickerEODHd("US6701002056");
                 Debug.WriteLine($"NovaMeu:\t{novaMeu}");
 
-                var novaMama = await EodhdUserService.GetTicker("DK0062498333");
+                var novaMama = await EodhdUserService.TrobaTickerEODHd("DK0062498333");
                 Debug.WriteLine($"NovaMama:\t{novaMama}");
 
-                var clarus = await EodhdUserService.GetTicker("US18270P1093");
+                var clarus = await EodhdUserService.TrobaTickerEODHd("US18270P1093");
                 Debug.WriteLine($"Clarus:\t{clarus}");
 
-                var mastercard2 = await EodhdUserService.GetTicker("M4I");
+                var mastercard2 = await EodhdUserService.TrobaTickerEODHd("M4I");
                 Debug.WriteLine($"Mastercard:\t{mastercard2}");
 
-                var berkshire2 = await EodhdUserService.GetTicker("BRYN");
+                var berkshire2 = await EodhdUserService.TrobaTickerEODHd("BRYN");
                 Debug.WriteLine($"Berkshire:\t{berkshire2}");
 
-                var sp5002 = await EodhdUserService.GetTicker("QDVE");
+                var sp5002 = await EodhdUserService.TrobaTickerEODHd("QDVE");
                 Debug.WriteLine($"S&P 500:\t{sp5002}");
 
-                var dwsInvest = await EodhdUserService.GetTicker("LU1965927921");
+                var dwsInvest = await EodhdUserService.TrobaTickerEODHd("LU1965927921");
                 Debug.WriteLine($"DwsInvest:\t{dwsInvest}");
 
 
-                var euroFund = await EodhdUserService.GetTicker("LU0090865873");
+                var euroFund = await EodhdUserService.TrobaTickerEODHd("LU0090865873");
                 Debug.WriteLine($"EuroFund:\t{euroFund}");
 
-                var globalTech = await EodhdUserService.GetTicker("LU1235294995");
+                var globalTech = await EodhdUserService.TrobaTickerEODHd("LU1235294995");
                 Debug.WriteLine($"GlobalTech:\t{globalTech}");
 
-                var dwsFloating = await EodhdUserService.GetTicker("LU0034353002");
+                var dwsFloating = await EodhdUserService.TrobaTickerEODHd("LU0034353002");
                 Debug.WriteLine($"DwsFloating:\t{dwsFloating}");
             }
             catch (Exception ex)
@@ -521,38 +612,38 @@ namespace UnitTestInversions
 
                 Debug.WriteLine("----- Eodhd -----");
 
-                var USD = await EodhdUserService.GetLastCloseFromIsinAsync("EURUSD.FOREX");
+                var USD = await EodhdUserService.UltimTancamentEODHd("EURUSD.FOREX");
                 Debug.WriteLine($"USD:\t{USD.Value.ToString("C3", CultureInfo.CurrentCulture)}");
-                var DKK = await EodhdUserService.GetLastCloseFromIsinAsync("EURDKK.FOREX");
+                var DKK = await EodhdUserService.UltimTancamentEODHd("EURDKK.FOREX");
                 Debug.WriteLine($"DKK:\t{DKK.Value.ToString("C3", CultureInfo.CurrentCulture)}");
                 
                 Debug.WriteLine("");
 
-                var novaMama = await EodhdUserService.GetLastCloseFromIsinAsync("NOVO-B.CO") / DKK;
+                var novaMama = await EodhdUserService.UltimTancamentEODHd("NOVO-B.CO") / DKK;
                 Debug.WriteLine($"NovaMama:\t{novaMama.Value.ToString("C3", CultureInfo.CurrentCulture)}");
 
-                var novaMeu = await EodhdUserService.GetLastCloseFromIsinAsync("NVO.US") / USD;
+                var novaMeu = await EodhdUserService.UltimTancamentEODHd("NVO.US") / USD;
                 Debug.WriteLine($"NovaMeu:\t{novaMeu.Value.ToString("C3", CultureInfo.CurrentCulture)}");
 
-                var clarus = await EodhdUserService.GetLastCloseFromIsinAsync("CLAR.US") / USD;
+                var clarus = await EodhdUserService.UltimTancamentEODHd("CLAR.US") / USD;
                 Debug.WriteLine($"Clarus:\t{clarus.Value.ToString("C3", CultureInfo.CurrentCulture)}");
 
-                var mastercard2 = await EodhdUserService.GetLastCloseFromIsinAsync("M4I.MU");
+                var mastercard2 = await EodhdUserService.UltimTancamentEODHd("M4I.MU");
                 Debug.WriteLine($"Mastercard:\t{mastercard2.Value.ToString("C3", CultureInfo.CurrentCulture)}");
 
-                var berkshire2 = await EodhdUserService.GetLastCloseFromIsinAsync("BRYN.XETRA");
+                var berkshire2 = await EodhdUserService.UltimTancamentEODHd("BRYN.XETRA");
                 Debug.WriteLine($"Berkshire:\t{berkshire2.Value.ToString("C3", CultureInfo.CurrentCulture)}");
 
-                var dwsInvest = await EodhdUserService.GetLastCloseFromIsinAsync("LU1965927921.EUFUND");
+                var dwsInvest = await EodhdUserService.UltimTancamentEODHd("LU1965927921.EUFUND");
                 Debug.WriteLine($"DwsInvest:\t{dwsInvest.Value.ToString("C3", CultureInfo.CurrentCulture)}");
 
-                var euroFund = await EodhdUserService.GetLastCloseFromIsinAsync("LU0090865873.EUFUND");
+                var euroFund = await EodhdUserService.UltimTancamentEODHd("LU0090865873.EUFUND");
                 Debug.WriteLine($"EuroFund:\t{euroFund.Value.ToString("C3", CultureInfo.CurrentCulture)}");
 
-                var globalTech = await EodhdUserService.GetLastCloseFromIsinAsync("LU1235294995.EUFUND") / USD;
+                var globalTech = await EodhdUserService.UltimTancamentEODHd("LU1235294995.EUFUND") / USD;
                 Debug.WriteLine($"GlobalTech:\t{globalTech.Value.ToString("C3", CultureInfo.CurrentCulture)}");
 
-                var dwsFloating = await EodhdUserService.GetLastCloseFromIsinAsync("LU0034353002.EUFUND");
+                var dwsFloating = await EodhdUserService.UltimTancamentEODHd("LU0034353002.EUFUND");
                 Debug.WriteLine($"DwsFloating:\t{dwsFloating.Value.ToString("C3", CultureInfo.CurrentCulture)}");
 
                 Debug.WriteLine("----------------------");
