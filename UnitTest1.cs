@@ -421,8 +421,6 @@ namespace UnitTestInversions
 
         #region *** Test ***
 
-
-
         [TestMethod]
         public void ProvesFestiusTots()
         {
@@ -487,7 +485,7 @@ namespace UnitTestInversions
         }
 
         [TestMethod]
-        public void ProvesCalendarisBorsesFMP()
+        public async void ProvesCalendarisBorsesFMP()
         {
             try
             {
