@@ -14,10 +14,23 @@
       <provider invariantName="System.Data.SqlClient" type="System.Data.Entity.SqlServer.SqlProviderServices, EntityFramework.SqlServer" />
     </providers>
   </entityFramework>
-  <connectionStrings>
-    <add name="InversionsBDContext" connectionString="metadata=res://*/InversionsBD.csdl|res://*/InversionsBD.ssdl|res://*/InversionsBD.msl;provider=System.Data.SqlClient;provider connection string=&quot;data source=(LocalDB)\v11.0;attachdbfilename=C:\Users\joanp\Documents\Visual Studio 2013\Projects\_Actiu\InversionsV2\BD\InversionsBD.mdf;integrated security=True;connect timeout=30;MultipleActiveResultSets=True;App=EntityFramework&quot;" providerName="System.Data.EntityClient" />
-  </connectionStrings>
   <startup>
     <supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.8" />
   </startup>
+  <runtime>
+    <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+      <dependentAssembly>
+        <assemblyIdentity name="System.IO.Pipelines" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-10.0.0.5" newVersion="10.0.0.5" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="System.Text.Encodings.Web" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-10.0.0.5" newVersion="10.0.0.5" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="Microsoft.Bcl.AsyncInterfaces" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-10.0.0.5" newVersion="10.0.0.5" />
+      </dependentAssembly>
+    </assemblyBinding>
+  </runtime>
 </configuration>

@@ -32,7 +32,7 @@ namespace UnitTestInversions
         //[TestMethod]
         public void ModificaEstruturaTaulaMoviments()
         {
-            var sessio = new InversionsBDContext();
+            var sessio = InversionsBDContext.Create();
 
             sessio.Database.ExecuteSqlCommand("EXEC sp_RENAME 'DesglosCompres.RefCompraId' , 'MovCompraId', 'COLUMN'");
             sessio.Database.ExecuteSqlCommand("EXEC sp_RENAME 'DesglosCompres.RefCompraOrigId' , 'MovCompraOrigId', 'COLUMN'");
@@ -49,7 +49,7 @@ namespace UnitTestInversions
         public void CreaMovimentRefVendaIdEnVendesTraspassades()
         {
             int cont = 0;
-            using (var conn = new InversionsBDContext())
+            using (var conn = InversionsBDContext.Create())
             {
                 using (var dbContextTransaction = conn.Database.BeginTransaction())
                 {
@@ -78,11 +78,11 @@ namespace UnitTestInversions
         {
             return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar la taula.
 
-            var sessio = new InversionsBDContext();
+            var sessio = InversionsBDContext.Create();
 
             sessio.Database.ExecuteSqlCommand("TRUNCATE TABLE [DesglosCompres]");
 
-            using (var conn = new InversionsBDContext())
+            using (var conn = InversionsBDContext.Create())
             {
                 Debug.WriteLine("********** Inici **********");
 
@@ -132,7 +132,7 @@ namespace UnitTestInversions
         [TestMethod]
         public void ModificaEstruturaTaulaMoviments2()
         {
-            var sessio = new InversionsBDContext();
+            var sessio = InversionsBDContext.Create();
             try
             {
                 sessio.Database.ExecuteSqlCommand("ALTER TABLE [Moviments] DROP COLUMN [PreuParticipacioOrigen]");
@@ -162,7 +162,7 @@ namespace UnitTestInversions
         {
             return; // Per evitar executar accidentalment. Eliminar aquesta fila per regenerar l ataula.
 
-            using (var conn = new InversionsBDContext())
+            using (var conn = InversionsBDContext.Create())
             {
                 Debug.WriteLine("********** Inici **********");
                 // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
@@ -203,7 +203,7 @@ namespace UnitTestInversions
             decimal preuParticipacioVenda;
             const string descripcio = null;
 
-            using (var conn = new InversionsBDContext())
+            using (var conn = InversionsBDContext.Create())
             {
                 using (var dbContextTransaction = conn.Database.BeginTransaction())
                 {
@@ -269,7 +269,7 @@ namespace UnitTestInversions
             var ccc1 = prodDest.MovimentsProducteUsuari;
             //var ccc = prodDest.Moviments.Where(w => w.UsuariId == Usuari.Seleccionat.Id);
 
-            using (var conn = new InversionsBDContext())
+            using (var conn = InversionsBDContext.Create())
             {
                 using (var dbContextTransaction = conn.Database.BeginTransaction())
                 {
@@ -303,7 +303,7 @@ namespace UnitTestInversions
         {
             const int idTraspasVenda = 194;
 
-            using (var conn = new InversionsBDContext())
+            using (var conn = InversionsBDContext.Create())
             {
                 Debug.WriteLine("********** Inici **********");
                 // *** Obligatori perquè funcioni "Usuari.Seleccionat.Id"
@@ -336,7 +336,7 @@ namespace UnitTestInversions
         [TestMethod]
         public void InformaTickerExchange()
         {
-            using (var conn = new InversionsBDContext())
+            using (var conn = InversionsBDContext.Create())
             {
                 using (var dbContextTransaction = conn.Database.BeginTransaction())
                 {
@@ -1564,7 +1564,7 @@ namespace UnitTestInversions
 
         private static InversionsBDContext ConnectaBd()
         {
-            InversionsBDContext sessio = new InversionsBDContext();
+            InversionsBDContext sessio = InversionsBDContext.Create();
             sessio.Configuration.AutoDetectChangesEnabled = false; // Si poso true, dona error quan inserto una fila i l'esborro en la mateixa sessió.
             sessio.Configuration.LazyLoadingEnabled = true;
 
